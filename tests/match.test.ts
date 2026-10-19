@@ -38,9 +38,14 @@ describe("prefix-matched listings", () => {
     expect(identityStillMatches(s, rec({ name: "Other", homepage: "https://spam.example" }))).toBe(false);
   });
   it("every verified catalog station has a UUID or prefix plus a homepage rule", () => {
-    for (const c of [...catalogById.values()].filter((c) => c.identity.status === "catalog-verified")) {
+    for (const c of [...catalogById.values()].filter((c) => c.identity.status === "catalog-verified" && !c.directStreams)) {
       expect(c.radioBrowserUuid || c.rbUuidPrefixes?.length).toBeTruthy();
       expect(c.match?.homepageHints?.length).toBeGreaterThan(0);
+    }
+  });
+  it("every state station plays in-app via a Dailymotion embed, no external page needed", () => {
+    for (const id of ["eg-general-program", "eg-middle-east", "eg-sout-el-arab", "eg-cultural", "eg-music-program", "eg-youth-sports", "eg-radio-masr", "eg-greater-cairo", "eg-al-aghani"]) {
+      expect(catalogById.get(id)?.officialPlayer?.embedUrl).toMatch(/^https:\/\/geo\.dailymotion\.com\/player\/xi5eg\.html\?video=x[0-9a-z]+$/);
     }
   });
 });

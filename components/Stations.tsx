@@ -9,7 +9,7 @@ import { togglePin, toggleFavorite } from "@/lib/state";
 import { useLang, useT } from "@/lib/ui";
 import { isActive, LiveBadge, statusLabel, useUiStatus } from "./Player";
 import { fmtDateTime } from "@/lib/i18n";
-import { OfficialPlayerButton } from "./OfficialPlayer";
+import { hasEmbed, openEmbed } from "./OfficialPlayer";
 import type { Category } from "@/lib/types";
 
 const CAT_ICON: Record<Category, string> = {
@@ -73,12 +73,13 @@ export function CoreButton({ id }: { id: string }) {
   if (!v) return null;
   const active = current && ui && isActive(ui.status);
   const failed = current && ui && (ui.status === "unavailable" || ui.status === "resolve-failed");
-  const unverifiedNoStream = v.identity === "unverified";
+  const embed = v.identity === "unverified" && hasEmbed(id);
+  const unverifiedNoStream = v.identity === "unverified" && !embed;
   return (
     <div className={`core-card cat-${v.category} ${active ? "is-active" : ""} ${failed ? "is-failed" : ""}`}>
       <button
         className="core-main"
-        onClick={() => (active ? player().stop() : player().playById(id))}
+        onClick={() => (embed ? openEmbed(id) : active ? player().stop() : player().playById(id))}
         aria-label={`${active ? t.stop : t.play}: ${displayName(v, lang, nick)}`}
       >
         <Logo id={id} size={56} />
@@ -91,6 +92,8 @@ export function CoreButton({ id }: { id: string }) {
               </>
             ) : unverifiedNoStream ? (
               t.unverified
+            ) : embed ? (
+              <>{v.frequency ?? t.categories[v.category]}</>
             ) : (
               <>{v.frequency ?? t.categories[v.category]}</>
             )}
@@ -100,7 +103,7 @@ export function CoreButton({ id }: { id: string }) {
           <Icon name={active ? "stop" : "play"} size={30} />
         </span>
       </button>
-      {(failed || (!current && info?.lastError && !info.lastOkAt) || unverifiedNoStream) && (
+      {!embed && (failed || (!current && info?.lastError && !info.lastOkAt) || unverifiedNoStream) && (
         <div className="core-foot">
           <span className="muted small">
             {current && ui?.message ? ui.message : unverifiedNoStream ? t.resolve.unverified : info?.lastErrorAt ? `${t.status.unavailable} · ${fmtDateTime(info.lastErrorAt, lang)}` : ""}
@@ -114,7 +117,6 @@ export function CoreButton({ id }: { id: string }) {
                 {t.findStream}
               </Link>
             )}
-            <OfficialPlayerButton id={id} small />
           </span>
         </div>
       )}
@@ -132,9 +134,16 @@ export function StationRow({ id, view, extra, onPlay, onRemember }: { id: string
   const { current, ui } = useStationStatus(id);
   if (!v) return null;
   const active = current && ui && isActive(ui.status);
+  // Stations published only as the broadcaster's live player play in the in-app player window.
+  const embed = v.identity === "unverified" && hasEmbed(id);
+  const onMain = () => {
+    if (onPlay) return onPlay();
+    if (embed) return openEmbed(id);
+    return active ? player().stop() : player().playById(id);
+  };
   return (
     <li className={`station-row ${active ? "is-active" : ""}`}>
-      <button className="sr-main" onClick={() => (onPlay ? onPlay() : active ? player().stop() : player().playById(id))} aria-label={`${active ? t.stop : t.play}: ${displayName(v, lang, nick)}`}>
+      <button className="sr-main" onClick={onMain} aria-label={`${active ? t.stop : t.play}: ${displayName(v, lang, nick)}`}>
         <Logo id={id} size={44} />
         <span className="sr-text">
           <span className="sr-name">{displayName(v, lang, nick)}</span>
@@ -145,7 +154,8 @@ export function StationRow({ id, view, extra, onPlay, onRemember }: { id: string
               </>
             ) : (
               <>
-                <IdentityBadge v={v} /> <span className="muted">{t.categories[v.category]}</span>
+                {!embed && <IdentityBadge v={v} />}{" "}
+                <span className="muted">{t.categories[v.category]}</span>
               </>
             )}
           </span>

@@ -45,6 +45,17 @@ export function secureVariants(raw: string): string[] {
   return [...new Set(out)];
 }
 
+export function streamsFromUrls(list: { url: string; codec?: string; bitrate?: number }[]): StreamRef[] {
+  const secure: StreamRef[] = [];
+  const insecure: StreamRef[] = [];
+  const seen = new Set<string>();
+  for (const s of list) {
+    for (const v of secureVariants(s.url)) if (!seen.has(v)) (seen.add(v), secure.push({ url: v, codec: s.codec, bitrate: s.bitrate, source: "custom" }));
+    if (s.url.startsWith("http:") && !seen.has(s.url)) (seen.add(s.url), insecure.push({ url: s.url, codec: s.codec, bitrate: s.bitrate, source: "custom" }));
+  }
+  return [...secure, ...insecure];
+}
+
 export function streamsFrom(records: DirectoryStation[]): StreamRef[] {
   const secure: StreamRef[] = [];
   const insecure: StreamRef[] = [];
@@ -134,6 +145,19 @@ export async function resolveStation(id: string, signal?: AbortSignal): Promise<
   const c = catalogById.get(id);
 
   if (c) {
+    if (c.directStreams?.length) {
+      const station: PlayableStation = {
+        id,
+        nameAr: c.nameAr,
+        nameEn: c.nameEn,
+        country: "EG",
+        category: c.category,
+        website: c.website,
+        identity: "catalog-verified",
+        streams: streamsFromUrls(c.directStreams),
+      };
+      return { ok: true, station, fromCache: false };
+    }
     if (c.radioBrowserUuid || c.rbUuidPrefixes?.length) {
       try {
         const [byId, byPre] = await Promise.all([

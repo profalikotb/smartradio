@@ -37,6 +37,8 @@ export interface CatalogStation {
    * Resolved against the Egypt listing; each record must still pass the identity check.
    */
   rbUuidPrefixes?: string[];
+  /** Broadcaster stream URLs verified by hand (not from the directory). */
+  directStreams?: { url: string; codec?: string; bitrate?: number }[];
   /** Rules a directory record must satisfy to be offered as a candidate for this station. */
   match?: { names: string[]; homepageHints?: string[] };
   /**

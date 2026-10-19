@@ -67,11 +67,7 @@ export const CATALOG: CatalogStation[] = [
     core: true,
     match: { names: ["الاغاني", "الاغانى", "aghani", "aghany", "elaghany"] },
     // Embedded on Maspero's official Al Aghani page (maspero.eg/stream/13), seen 20/10/2026.
-    officialPlayer: {
-      embedUrl: "https://geo.dailymotion.com/player/xi5eg.html?video=x8n6dyz",
-      pageUrl: "https://www.maspero.eg/stream/13",
-      provider: "Maspero · Dailymotion",
-    },
+    officialPlayer: { embedUrl: dm("x8n6dyz"), pageUrl: "https://www.maspero.eg/stream/13", provider: "Maspero" },
     identity: {
       status: "unverified",
       sources: [
@@ -172,20 +168,102 @@ export const CATALOG: CatalogStation[] = [
     prefixes: ["b8305209"],
     note: "Radio Browser b8305209-… — Egypt, homepage mixfmegypt.com (official), HTTPS.",
   }),
-  // Egyptian state radio (Maspero): no public audio stream in the directory on 20/10/2026.
-  // Each gets its official Maspero live page; the in-app directory search remains available.
-  ...discovery("eg-general-program", "البرنامج العام", "General Program (Egypt)", "general", ["البرنامج العام", "general program", "el bernameg el aam"], ["البرنامج العام", "general program"], undefined, 10),
-  ...discovery("eg-middle-east", "إذاعة الشرق الأوسط", "Middle East Radio (Egypt)", "general", ["الشرق الاوسط", "middle east radio", "sharq al awsat"], ["الشرق الاوسط", "middle east"], "89.5 FM", 16),
-  ...discovery("eg-sout-el-arab", "صوت العرب", "Sout El Arab", "news", ["صوت العرب", "sout el arab", "voice of the arabs"], ["صوت العرب", "sout el arab", "sawt al arab"], undefined, 9),
-  ...discovery("eg-cultural", "البرنامج الثقافي", "Cultural Program (Egypt)", "culture", ["البرنامج الثقافي", "cultural program"], ["الثقافي", "cultural"], undefined, 12),
-  ...discovery("eg-music-program", "البرنامج الموسيقي", "Music Program (Egypt)", "music", ["البرنامج الموسيقي", "music program", "el bernameg el mosiqi"], ["البرنامج الموسيقي", "mosiqi", "music program"], "98.8 FM"),
-  ...discovery("eg-youth-sports", "الشباب والرياضة", "Youth & Sports Radio", "sports", ["الشباب والرياضة", "youth and sport"], ["الشباب والرياضة", "الشباب و الرياضة", "youth"], "108 FM", 11),
-  ...discovery("eg-radio-masr", "راديو مصر", "Radio Masr", "news", ["راديو مصر", "radio masr", "radio misr"], ["راديو مصر", "radio masr", "radio misr"], undefined, 8),
-  ...discovery("eg-greater-cairo", "إذاعة القاهرة الكبرى", "Greater Cairo Radio", "regional", ["القاهرة الكبرى", "greater cairo radio"], ["القاهرة الكبرى", "greater cairo"], "102.2 FM", 14),
-  ...discovery("eg-mega", "ميجا إف إم", "Mega FM", "music", ["ميجا اف ام", "mega fm"], ["ميجا", "mega fm"], "92.7 FM"),
-  ...discovery("eg-nagham", "نغم إف إم", "Nagham FM", "music", ["نغم اف ام", "nagham fm"], ["نغم", "nagham"], "105.3 FM"),
+  // Egyptian state radio (Maspero) publishes these only as Dailymotion live players (IDs taken from
+  // worldradiomap.com play pages, cross-checked: Al Aghani x8n6dyz matches maspero.eg/stream/13).
+  // They play inside the app's player window.
+  ...state("eg-general-program", "إذاعة البرنامج العام", "General Program", "general", "x8n6dt3", 10, ["البرنامج العام", "general program", "el bernameg el aam"], "107.4 FM"),
+  ...state("eg-middle-east", "إذاعة الشرق الأوسط", "Middle East Radio", "general", "x8n6drt", 16, ["الشرق الاوسط", "middle east radio", "sharq al awsat"], "89.5 FM"),
+  ...state("eg-sout-el-arab", "إذاعة صوت العرب", "Sout El Arab", "news", "x8n6dqq", 9, ["صوت العرب", "sout el arab", "voice of the arabs", "sawt al arab"], "106.3 FM"),
+  ...state("eg-cultural", "إذاعة البرنامج الثقافي", "Cultural Program", "culture", "x8n6eci", 12, ["البرنامج الثقافي", "cultural program", "الثقافي"], "91.5 FM"),
+  ...state("eg-music-program", "إذاعة البرنامج الموسيقي", "Music Program", "music", "x8n6ea6", undefined, ["البرنامج الموسيقي", "music program", "el bernameg el mosiqi"], "98.8 FM"),
+  ...state("eg-youth-sports", "إذاعة الشباب والرياضة", "Youth & Sports Radio", "sports", "x8n6dzo", 11, ["الشباب والرياضة", "youth and sport", "youth & sports"], "108 FM"),
+  ...state("eg-radio-masr", "راديو مصر", "Radio Masr", "news", "x8n6dpk", 8, ["راديو مصر", "radio masr", "radio misr"], "88.7 FM"),
+  ...state("eg-greater-cairo", "إذاعة القاهرة الكبرى", "Greater Cairo Radio", "regional", "x8n6ebs", 14, ["القاهرة الكبرى", "greater cairo radio"], "102.2 FM"),
+  ...direct({
+    id: "eg-nagham",
+    nameAr: "نغم إف إم",
+    nameEn: "Nagham FM",
+    frequency: "105.3 FM",
+    aliases: ["نغم اف ام", "nagham fm", "راديو نغم"],
+    url: "https://ahmsamir.radioca.st/stream",
+    note: "Stream published on the World Radio Map Cairo listing (105.3 FM, checked 20/10/2026). HTTPS (radioca.st).",
+    source: "https://worldradiomap.com/eg/play/nagham.htm",
+  }),
+  ...direct({
+    id: "eg-mega",
+    nameAr: "ميجا إف إم",
+    nameEn: "Mega FM",
+    frequency: "92.7 FM",
+    aliases: ["ميجا اف ام", "mega fm", "mega fm 92.7"],
+    url: "http://nebula.shoutca.st:8211/mp3",
+    website: "http://megafm927.com/",
+    note: "Stream published on the World Radio Map Cairo listing (92.7 FM, website megafm927.com, checked 20/10/2026). HTTP only — browsers may block it inside the secure app; the app tries HTTPS on the same server first.",
+    source: "https://worldradiomap.com/eg/play/mega.htm",
+  }),
   ...discovery("eg-alexandria", "إذاعة الإسكندرية", "Alexandria Radio", "regional", ["اذاعة الاسكندرية", "alexandria radio"], ["الاسكندرية", "اسكندرية", "alexandria"]),
 ];
+
+function dm(video: string) {
+  return `https://geo.dailymotion.com/player/xi5eg.html?video=${video}`;
+}
+
+function state(
+  id: string,
+  nameAr: string,
+  nameEn: string,
+  category: CatalogStation["category"],
+  video: string,
+  masperoStream: number | undefined,
+  aliases: string[],
+  frequency?: string,
+): CatalogStation[] {
+  const page = masperoStream ? `https://www.maspero.eg/stream/${masperoStream}` : "https://www.maspero.eg/stream";
+  return [
+    {
+      id,
+      nameAr,
+      nameEn,
+      aliases,
+      category,
+      country: "EG",
+      city: "Cairo",
+      frequency,
+      match: { names: aliases.slice(0, 2) },
+      officialPlayer: { embedUrl: dm(video), pageUrl: page, provider: "Maspero" },
+      identity: {
+        status: "unverified",
+        sources: [
+          { label: "Maspero — live page", url: page },
+          { label: "World Radio Map — Cairo stations", url: "https://worldradiomap.com/eg/al-qahirah" },
+        ],
+        note: `Egyptian state radio (National Media Authority). Published only as a Dailymotion live player (video ${video}); plays in the in-app player window while it is open.`,
+      },
+    },
+  ];
+}
+
+function direct(o: { id: string; nameAr: string; nameEn: string; frequency: string; aliases: string[]; url: string; website?: string; note: string; source: string }): CatalogStation[] {
+  return [
+    {
+      id: o.id,
+      nameAr: o.nameAr,
+      nameEn: o.nameEn,
+      aliases: o.aliases,
+      category: "music",
+      country: "EG",
+      city: "Cairo",
+      frequency: o.frequency,
+      website: o.website,
+      directStreams: [{ url: o.url, codec: "MP3" }],
+      identity: {
+        status: "catalog-verified",
+        verifiedOn: "20/10/2026",
+        sources: [{ label: "World Radio Map — station page", url: o.source }],
+        note: o.note,
+      },
+    },
+  ];
+}
 
 function verified(o: {
   id: string;
