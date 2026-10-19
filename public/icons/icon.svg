@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12295a"/><stop offset="1" stop-color="#060f22"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4d68c"/><stop offset="1" stop-color="#b8892e"/></linearGradient>
+    <radialGradient id="knob" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#f7dea0"/><stop offset=".7" stop-color="#c99a3c"/><stop offset="1" stop-color="#8f6a22"/></radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <g transform="translate(256 256) scale(0.90625) translate(-256 -256)">
+    <rect x="72" y="150" width="368" height="250" rx="44" fill="none" stroke="url(#gold)" stroke-width="14"/>
+    <path d="M150 150 L330 84" stroke="url(#gold)" stroke-width="14" stroke-linecap="round"/>
+    <circle cx="330" cy="84" r="12" fill="#f4d68c"/>
+    <g stroke="#f4d68c" stroke-opacity=".55" stroke-width="5" stroke-linecap="round">
+      <line x1="112" y1="196" x2="112" y2="222"/><line x1="126" y1="206" x2="126" y2="222"/><line x1="140" y1="206" x2="140" y2="222"/><line x1="154" y1="206" x2="154" y2="222"/><line x1="168" y1="206" x2="168" y2="222"/><line x1="182" y1="196" x2="182" y2="222"/><line x1="196" y1="206" x2="196" y2="222"/><line x1="210" y1="206" x2="210" y2="222"/><line x1="224" y1="206" x2="224" y2="222"/><line x1="238" y1="206" x2="238" y2="222"/><line x1="252" y1="196" x2="252" y2="222"/>
+    </g>
+    <line x1="168" y1="186" x2="168" y2="232" stroke="#2fbf8f" stroke-width="6" stroke-linecap="round"/>
+    <g fill="#f4d68c" fill-opacity=".8">
+      <circle cx="122" cy="268" r="7"/><circle cx="152" cy="268" r="7"/><circle cx="182" cy="268" r="7"/><circle cx="212" cy="268" r="7"/><circle cx="122" cy="298" r="7"/><circle cx="152" cy="298" r="7"/><circle cx="182" cy="298" r="7"/><circle cx="212" cy="298" r="7"/><circle cx="122" cy="328" r="7"/><circle cx="152" cy="328" r="7"/><circle cx="182" cy="328" r="7"/><circle cx="212" cy="328" r="7"/>
+    </g>
+    <circle cx="346" cy="300" r="62" fill="url(#knob)"/>
+    <circle cx="346" cy="300" r="62" fill="none" stroke="#060f22" stroke-opacity=".35" stroke-width="4"/>
+    <path d="M330 270 L330 330 L376 300 Z" fill="#0b1a33"/>
+    <circle cx="404" cy="196" r="10" fill="#2fbf8f"/>
+  </g>
+</svg>

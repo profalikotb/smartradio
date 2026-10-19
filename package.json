@@ -1,0 +1,36 @@
+{
+  "name": "prof-ali-kotb-smart-radio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prof Ali Kotb Smart Radio — private bilingual (AR/EN) live radio PWA",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "hash-password": "node scripts/hash-password.mjs",
+    "icons": "node scripts/make-icons.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "hls.js": "1.7.3",
+    "jose": "6.2.12",
+    "next": "15.5.28",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "jsdom": "25.0.1",
+    "sharp": "0.35.5",
+    "typescript": "5.9.3",
+    "vitest": "5.0.5"
+  }
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>غير متصل — Offline</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100dvh; display: grid; place-items: center; background: #08142a; color: #f1ead8;
+         font-family: system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif; text-align: center; padding: 24px; }
+  .card { max-width: 380px; }
+  .mark { width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 16px; background: linear-gradient(145deg,#f0cf7e,#d9b45e); }
+  h1 { font-size: 1.3rem; margin: 0 0 8px; }
+  p { color: #a9b4cc; margin: 6px 0; line-height: 1.6; }
+  button { margin-top: 16px; min-height: 48px; padding: 0 24px; border-radius: 12px; border: 0; font: inherit; font-weight: 600;
+           background: linear-gradient(180deg,#f0cf7e,#d9b45e); color: #0b1a33; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark"></div>
+    <h1>لا يوجد اتصال بالإنترنت</h1>
+    <p>البث المباشر يحتاج إنترنت. مفضلتك وإعداداتك محفوظة على هذا الجهاز.</p>
+    <p dir="ltr">You're offline. Live radio needs internet; your favorites and settings are safe on this device.</p>
+    <button onclick="location.reload()">إعادة المحاولة · Retry</button>
+  </div>
+</body>
+</html>
