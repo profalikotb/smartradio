@@ -10,9 +10,23 @@ export async function hashPassword(password: string, N = 2 ** 15, r = 8, p = 1):
   return ["scrypt", N, r, p, salt.toString("base64"), key.toString("base64")].join(":");
 }
 
+/** Tolerates common paste mistakes: the "APP_PASSWORD_HASH=" prefix, quotes, spaces, line breaks. */
+export function cleanHash(stored: string | undefined): string {
+  return (stored ?? "")
+    .trim()
+    .replace(/^APP_PASSWORD_HASH\s*=\s*/, "")
+    .replace(/^["']|["']$/g, "")
+    .replace(/\s+/g, "");
+}
+
+export function isValidHashFormat(stored: string | undefined): boolean {
+  const parts = cleanHash(stored).split(":");
+  return parts.length === 6 && parts[0] === "scrypt" && Number.isInteger(Number(parts[1])) && !!parts[4] && !!parts[5];
+}
+
 export async function verifyPassword(password: string, stored: string | undefined): Promise<boolean> {
   if (!stored) return false;
-  const parts = stored.trim().split(":");
+  const parts = cleanHash(stored).split(":");
   if (parts.length !== 6 || parts[0] !== "scrypt") return false;
   const [, n, r, p, saltB64, hashB64] = parts as [string, string, string, string, string, string];
   const N = Number(n), R = Number(r), P = Number(p);
