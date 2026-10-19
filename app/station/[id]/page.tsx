@@ -43,7 +43,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
             {v.frequency ? ` · ${v.frequency}` : ""}
           </p>
           <p className="row gap-s wrap">
-            <IdentityBadge v={v} />
+            {!(v.identity === "unverified" && (info?.lastOkAt || hasEmbed(id))) && <IdentityBadge v={v} />}
             {c?.core && <span className="badge badge-gold">{t.core}</span>}
             <span className="badge badge-neutral">{t.categories[v.category]}</span>
           </p>
@@ -72,11 +72,13 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
         </p>
       )}
 
+      <details className="tech">
+        <summary>{lang === "ar" ? "تفاصيل تقنية" : "Technical details"}</summary>
       <section className="panel">
         <dl className="kv">
           <dt>{t.lastOkHere}</dt>
           <dd>{info?.lastOkAt ? fmtDateTime(info.lastOkAt, lang) : t.never}</dd>
-          {info?.lastErrorAt && (
+          {info?.lastErrorAt && (!info.lastOkAt || info.lastErrorAt > info.lastOkAt) && (
             <>
               <dt>{lang === "ar" ? "آخر خطأ" : "Last error"}</dt>
               <dd>
@@ -159,6 +161,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
         </section>
       )}
       <p className="hint">{t.privacyNote}</p>
+      </details>
     </div>
   );
 }
