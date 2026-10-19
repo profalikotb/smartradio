@@ -32,7 +32,7 @@ export function Logo({ id, size = 48 }: { id?: string; size?: number }) {
   const style = { width: size, height: size };
   if (logo && !broken)
     // eslint-disable-next-line @next/next/no-img-element
-    return <img className="logo" src={logo} alt="" width={size} height={size} style={style} loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} />;
+    return <img className="logo" src={logo} alt="" width={size} height={size} style={style} loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} onLoad={(e) => e.currentTarget.naturalWidth < 16 && setBroken(true)} />;
   const name = v ? (lang === "ar" ? v.nameAr : v.nameEn) : "";
   const letter = (name.replace(/^(إذاعة|اذاعة|راديو|radio)\s+/i, "").replace(/^ال/, "").trim()[0] ?? "♪").toUpperCase();
   return (
