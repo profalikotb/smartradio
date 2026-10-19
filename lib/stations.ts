@@ -22,22 +22,49 @@ export interface StationView {
   frequency?: string;
 }
 
+/**
+ * HTTPS candidates for a directory URL. The app is served over HTTPS, and browsers block plain-HTTP
+ * audio there. Same host + path over HTTPS is tried first; radiojar (used by Egyptian state radio)
+ * serves the same mount on its HTTPS edge stream.radiojar.com. The original URL stays as a last resort.
+ */
+export function secureVariants(raw: string): string[] {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return [];
+  }
+  if (u.protocol === "https:") return [u.toString()];
+  if (u.protocol !== "http:") return [];
+  const out: string[] = [];
+  const https = new URL(u.toString());
+  https.protocol = "https:";
+  if (u.port === "80") https.port = "";
+  if (/(^|\.)radiojar\.com$/i.test(u.hostname)) out.push(`https://stream.radiojar.com${u.pathname}${u.search}`);
+  out.push(https.toString());
+  return [...new Set(out)];
+}
+
 export function streamsFrom(records: DirectoryStation[]): StreamRef[] {
-  const out: StreamRef[] = [];
+  const secure: StreamRef[] = [];
+  const insecure: StreamRef[] = [];
+  const seen = new Set<string>();
   for (const d of records) {
-    const url = d.urlResolved || d.url;
-    if (!url || out.some((s) => s.url === url)) continue;
-    out.push({
-      url,
+    const meta = {
       codec: d.codec || undefined,
       bitrate: d.bitrate || undefined,
       hls: d.hls,
       directoryOk: d.lastcheckok,
       directoryCheckedAt: d.lastcheckoktime || undefined,
-      source: "radio-browser",
-    });
+      source: "radio-browser" as const,
+    };
+    for (const raw of [d.urlResolved, d.url]) {
+      if (!raw) continue;
+      for (const v of secureVariants(raw)) if (!seen.has(v)) (seen.add(v), secure.push({ url: v, ...meta }));
+      if (raw.startsWith("http:") && !seen.has(raw)) (seen.add(raw), insecure.push({ url: raw, ...meta }));
+    }
   }
-  return out;
+  return [...secure, ...insecure];
 }
 
 export function playableFromDirectory(group: DirectoryStation[]): PlayableStation {
