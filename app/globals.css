@@ -1640,3 +1640,19 @@ input[type="search"]::-webkit-search-decoration {
   grid-auto-rows: minmax(120px, 210px);
   align-content: start;
 }
+.embed-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 0.8rem 0 0.4rem;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+}
+.embed-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}

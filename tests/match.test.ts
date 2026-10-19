@@ -22,8 +22,11 @@ describe("strict candidate rules", () => {
     expect(isCandidate(aghani, rec({ name: "Arabic Hits" }))).toBe(false);
     expect(isCandidate(aghani, rec({ name: "Nogoum FM" }))).toBe(false);
   });
-  it("verified UUID record must still match identity (homepage drift → refuse)", () => {
-    expect(identityStillMatches(quran, rec({ homepage: "https://misrquran.gov.eg/" }))).toBe(true);
-    expect(identityStillMatches(quran, rec({ homepage: "https://spam.example" }))).toBe(false);
+  it("verified UUID record: accepted on official homepage OR unchanged name; refused if repurposed", () => {
+    expect(identityStillMatches(quran, rec({ name: "x", homepage: "https://misrquran.gov.eg/" }))).toBe(true);
+    expect(identityStillMatches(quran, rec({ name: "إذاعة القرآن الكريم من القاهرة", homepage: "" }))).toBe(true);
+    expect(identityStillMatches(quran, rec({ name: "إذاعة القرآن الكريم من القاهرة", homepage: "http://www.facebook.com/quran.ertu" }))).toBe(true);
+    expect(identityStillMatches(quran, rec({ name: "Some Pop FM", homepage: "https://spam.example" }))).toBe(false);
+    expect(identityStillMatches(quran, rec({ name: "إذاعة القرآن الكريم", countrycode: "IR" }))).toBe(false);
   });
 });

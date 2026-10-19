@@ -34,6 +34,11 @@ export interface CatalogStation {
   radioBrowserUuid?: string;
   /** Rules a directory record must satisfy to be offered as a candidate for this station. */
   match?: { names: string[]; homepageHints?: string[] };
+  /**
+   * Broadcaster's own embedded web player, offered as a fallback when no direct audio stream is
+   * verified. Plays only while visible (no background/lock-screen playback).
+   */
+  officialPlayer?: { embedUrl: string; pageUrl: string; provider: string };
   identity: {
     status: "catalog-verified" | "unverified";
     sources: { label: string; url: string }[];

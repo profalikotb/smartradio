@@ -64,12 +64,19 @@ export const CATALOG: CatalogStation[] = [
     frequency: "105.8 FM",
     core: true,
     match: { names: ["الاغاني", "الاغانى", "aghani", "aghany", "elaghany"] },
+    // Embedded on Maspero's official Al Aghani page (maspero.eg/stream/13), seen 20/10/2026.
+    officialPlayer: {
+      embedUrl: "https://geo.dailymotion.com/player/xi5eg.html?video=x8n6dyz",
+      pageUrl: "https://www.maspero.eg/stream/13",
+      provider: "Maspero · Dailymotion",
+    },
     identity: {
       status: "unverified",
       sources: [
         { label: "Wikipedia — Al Aghani Radio (Egyptian Radio, launched 17/06/2000, Cairo 105.8)", url: "https://en.wikipedia.org/wiki/Al_Aghani_Radio" },
         { label: "Wikipedia — List of radio stations in Egypt (105.8, إذاعة الأغانى)", url: "https://en.wikipedia.org/wiki/List_of_radio_stations_in_Egypt" },
         { label: "Masrawy, 19/08/2026 — station active on 105.8 FM (Maspero)", url: "https://www.masrawy.com/news/news_egypt/details/2026/8/19/3035553" },
+        { label: "Maspero — official live page (embeds a Dailymotion live player, no direct audio stream)", url: "https://www.maspero.eg/stream/13" },
       ],
       note:
         "Station identity is confirmed (Egyptian national radio, Maspero, 105.8 FM). No official public HTTPS stream could be verified on 19/10/2026; the old official feed (elaghany.com) is defunct. The app searches the directory with strict Egypt + name rules and asks you to confirm a candidate — it never plays a look-alike automatically.",

@@ -9,6 +9,7 @@ import { togglePin, toggleFavorite } from "@/lib/state";
 import { useLang, useT } from "@/lib/ui";
 import { isActive, LiveBadge, statusLabel, useUiStatus } from "./Player";
 import { fmtDateTime } from "@/lib/i18n";
+import { OfficialPlayerButton } from "./OfficialPlayer";
 import type { Category } from "@/lib/types";
 
 const CAT_ICON: Record<Category, string> = {
@@ -113,6 +114,7 @@ export function CoreButton({ id }: { id: string }) {
                 {t.findStream}
               </Link>
             )}
+            <OfficialPlayerButton id={id} small />
           </span>
         </div>
       )}

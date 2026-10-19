@@ -40,3 +40,11 @@ describe("session tokens", () => {
     expect(await verifySessionToken(undefined)).toBe(false);
   });
 });
+
+describe("paste-mistake tolerance", () => {
+  it("accepts the hash with the variable-name prefix, quotes or line breaks", async () => {
+    const h = await hashPassword("correct horse battery", 2 ** 14);
+    for (const v of [`APP_PASSWORD_HASH=${h}`, `"${h}"`, ` ${h}\n`, h.slice(0, 20) + "\n" + h.slice(20)])
+      expect(await verifyPassword("correct horse battery", v)).toBe(true);
+  });
+});

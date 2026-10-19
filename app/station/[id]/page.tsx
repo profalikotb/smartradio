@@ -3,6 +3,7 @@ import { use, useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { IdentityBadge, Logo, useStationStatus } from "@/components/Stations";
 import { isActive, LiveBadge, statusLabel } from "@/components/Player";
+import { OfficialPlayerButton } from "@/components/OfficialPlayer";
 import { directory, DirectoryError } from "@/lib/directoryClient";
 import { player } from "@/lib/player/controller";
 import { dedupe, hostOf } from "@/lib/search/rank";
@@ -56,6 +57,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
         <button className={`btn ${fav ? "is-on" : ""}`} onClick={() => update((s) => toggleFavorite(s, id))} aria-pressed={fav}>
           <Icon name="star" size={18} /> {fav ? t.removeFav : t.addFav}
         </button>
+        <OfficialPlayerButton id={id} />
         {current && ui && (
           <span className={`status-pill st-${ui.status}`}>
             <LiveBadge status={ui.status} /> {ui.status === "playing" ? t.liveBroadcast : statusLabel(ui.status, t)}
