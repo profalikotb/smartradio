@@ -1,0 +1,216 @@
+"use client";
+/** Turns any station id (catalog / rb:<uuid> / custom:<id>) into something the player can use. */
+import { catalogById } from "./catalog";
+import { directory, DirectoryError } from "./directoryClient";
+import { identityStillMatches } from "./match";
+import { categorize } from "./search/rank";
+import { getState, update } from "./store";
+import type { AppState, Binding } from "./state";
+import type { CatalogStation, Category, DirectoryStation, IdentityStatus, PlayableStation, StreamRef } from "./types";
+
+export interface StationView {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  country: string;
+  category: Category;
+  logo?: string;
+  website?: string;
+  identity: IdentityStatus;
+  core: boolean;
+  catalog?: CatalogStation;
+  frequency?: string;
+}
+
+/**
+ * HTTPS candidates for a directory URL. The app is served over HTTPS, and browsers block plain-HTTP
+ * audio there. Same host + path over HTTPS is tried first; radiojar (used by Egyptian state radio)
+ * serves the same mount on its HTTPS edge stream.radiojar.com. The original URL stays as a last resort.
+ */
+export function secureVariants(raw: string): string[] {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return [];
+  }
+  if (u.protocol === "https:") return [u.toString()];
+  if (u.protocol !== "http:") return [];
+  const out: string[] = [];
+  const https = new URL(u.toString());
+  https.protocol = "https:";
+  if (u.port === "80") https.port = "";
+  if (/(^|\.)radiojar\.com$/i.test(u.hostname)) out.push(`https://stream.radiojar.com${u.pathname}${u.search}`);
+  out.push(https.toString());
+  return [...new Set(out)];
+}
+
+export function streamsFrom(records: DirectoryStation[]): StreamRef[] {
+  const secure: StreamRef[] = [];
+  const insecure: StreamRef[] = [];
+  const seen = new Set<string>();
+  for (const d of records) {
+    const meta = {
+      codec: d.codec || undefined,
+      bitrate: d.bitrate || undefined,
+      hls: d.hls,
+      directoryOk: d.lastcheckok,
+      directoryCheckedAt: d.lastcheckoktime || undefined,
+      source: "radio-browser" as const,
+    };
+    for (const raw of [d.urlResolved, d.url]) {
+      if (!raw) continue;
+      for (const v of secureVariants(raw)) if (!seen.has(v)) (seen.add(v), secure.push({ url: v, ...meta }));
+      if (raw.startsWith("http:") && !seen.has(raw)) (seen.add(raw), insecure.push({ url: raw, ...meta }));
+    }
+  }
+  return [...secure, ...insecure];
+}
+
+export function playableFromDirectory(group: DirectoryStation[]): PlayableStation {
+  const d = group[0]!;
+  return {
+    id: `rb:${d.uuid}`,
+    nameAr: d.name,
+    nameEn: d.name,
+    country: d.countrycode || d.country,
+    category: categorize(d),
+    logo: d.favicon || undefined,
+    website: d.homepage || undefined,
+    identity: "unverified",
+    streams: streamsFrom(group),
+  };
+}
+
+/** Synchronous view for lists/cards. */
+export function viewOf(id: string, s: AppState = getState()): StationView | null {
+  const c = catalogById.get(id);
+  if (c) {
+    const bound = s.bindings[id];
+    const identity: IdentityStatus = c.identity.status === "catalog-verified" ? "catalog-verified" : bound ? "user-confirmed" : "unverified";
+    return {
+      id,
+      nameAr: c.nameAr,
+      nameEn: c.nameEn,
+      country: "EG",
+      category: c.category,
+      website: c.website ?? bound?.homepage,
+      identity,
+      core: !!c.core,
+      catalog: c,
+      frequency: c.frequency,
+      logo: s.known[id]?.logo,
+    };
+  }
+  if (id.startsWith("custom:")) {
+    const cu = s.custom.find((x) => `custom:${x.id}` === id);
+    if (!cu) return null;
+    return { id, nameAr: cu.name, nameEn: cu.name, country: "—", category: "general", identity: "user-confirmed", core: false };
+  }
+  const k = s.known[id];
+  if (!k) return null;
+  return { ...k, core: false };
+}
+
+export type ResolveResult =
+  | { ok: true; station: PlayableStation; fromCache: boolean }
+  | { ok: false; reason: "unverified" | "identity-mismatch" | "directory" | "not-found"; detail?: string };
+
+function bindingToPlayable(c: CatalogStation, b: Binding): PlayableStation {
+  return {
+    id: c.id,
+    nameAr: c.nameAr,
+    nameEn: c.nameEn,
+    country: "EG",
+    category: c.category,
+    website: c.website ?? b.homepage,
+    identity: "user-confirmed",
+    streams: [b.stream, ...b.alternatives],
+  };
+}
+
+export async function resolveStation(id: string, signal?: AbortSignal): Promise<ResolveResult> {
+  const s = getState();
+  const c = catalogById.get(id);
+
+  if (c) {
+    if (c.radioBrowserUuid) {
+      try {
+        const recs = await directory.byUuids([c.radioBrowserUuid], signal);
+        const rec = recs[0];
+        if (!rec) return fallbackOr(id, { ok: false, reason: "not-found" });
+        if (!identityStillMatches(c, rec)) return { ok: false, reason: "identity-mismatch", detail: rec.homepage };
+        const station: PlayableStation = {
+          id,
+          nameAr: c.nameAr,
+          nameEn: c.nameEn,
+          country: "EG",
+          category: c.category,
+          website: c.website,
+          logo: rec.favicon || undefined,
+          identity: "catalog-verified",
+          streams: streamsFrom([rec]),
+        };
+        update((st) => ({ ...st, known: { ...st.known, [id]: station } }));
+        return { ok: true, station, fromCache: false };
+      } catch (e) {
+        if ((e as Error).name === "AbortError") throw e;
+        return fallbackOr(id, { ok: false, reason: "directory", detail: e instanceof DirectoryError ? e.kind : "error" });
+      }
+    }
+    const b = s.bindings[id];
+    if (b) return { ok: true, station: bindingToPlayable(c, b), fromCache: false };
+    return { ok: false, reason: "unverified" };
+  }
+
+  if (id.startsWith("custom:")) {
+    const cu = s.custom.find((x) => `custom:${x.id}` === id);
+    if (!cu) return { ok: false, reason: "not-found" };
+    return {
+      ok: true,
+      fromCache: false,
+      station: { id, nameAr: cu.name, nameEn: cu.name, country: "—", category: "general", identity: "user-confirmed", streams: [{ url: cu.url, source: "custom" }] },
+    };
+  }
+
+  const k = s.known[id];
+  if (k) return { ok: true, station: k, fromCache: true };
+  return { ok: false, reason: "not-found" };
+}
+
+/** When the directory is down, the last stream that came from the verified record is still usable. */
+function fallbackOr(id: string, r: ResolveResult): ResolveResult {
+  const k = getState().known[id];
+  return k?.streams.length ? { ok: true, station: k, fromCache: true } : r;
+}
+
+export function rememberDirectoryStation(st: PlayableStation) {
+  update((s) => ({ ...s, known: { ...s.known, [st.id]: st } }));
+}
+
+export function confirmBinding(catalogId: string, group: DirectoryStation[]) {
+  const d = group[0]!;
+  const streams = streamsFrom(group);
+  if (!streams.length) return;
+  const binding: Binding = {
+    stream: streams[0]!,
+    alternatives: streams.slice(1),
+    rbUuid: d.uuid,
+    directoryName: d.name,
+    homepage: d.homepage || undefined,
+    confirmedAt: new Date().toISOString(),
+  };
+  update((s) => ({ ...s, bindings: { ...s.bindings, [catalogId]: binding } }));
+}
+
+export function removeBinding(catalogId: string) {
+  update((s) => {
+    const b = { ...s.bindings };
+    delete b[catalogId];
+    return { ...s, bindings: b };
+  });
+}
+
+export function displayName(v: { nameAr: string; nameEn: string; id: string }, lang: "ar" | "en", nicknames: Record<string, string>) {
+  return nicknames[v.id] || (lang === "ar" ? v.nameAr : v.nameEn);
+}
