@@ -95,3 +95,22 @@ describe("dedupe", () => {
     expect(g[0]!.map((x) => x.urlResolved)).toEqual(["https://s1/x", "https://s2/x"]);
   });
 });
+
+describe("directory noise control", () => {
+  it("prefix-verified catalog stations swallow their own directory listings", () => {
+    const shaaby = rec({ uuid: "9346c66b-0000-0000-0000-000000000000", name: "SHA3BY FM", homepage: "https://95-fm.com/en" });
+    const keys = runSearch("sha3by", {}, s, [shaaby]).map((r) => r.entry.key);
+    expect(keys).toContain("eg-shaaby");
+    expect(keys).not.toContain(`rb:${shaaby.uuid}`);
+  });
+  it("directory results must match the query and are capped at 20", () => {
+    const spam = Array.from({ length: 40 }, (_, i) =>
+      rec({ uuid: `aaaaaaaa-0000-0000-0000-${String(i).padStart(12, "0")}`, name: `OmniRadio - Sheikh Reciter ${i}`, homepage: `https://r${i}.example`, urlResolved: `https://r${i}.example/s` }),
+    );
+    const unrelated = rec({ uuid: "bbbbbbbb-0000-0000-0000-000000000000", name: "Totally Different", urlResolved: "https://z.example/s" });
+    const r = runSearch("sheikh", {}, s, [...spam, unrelated]);
+    const dir = r.filter((x) => x.entry.source === "directory");
+    expect(dir.length).toBe(20);
+    expect(dir.some((x) => x.entry.key.startsWith("rb:bbbbbbbb"))).toBe(false);
+  });
+});

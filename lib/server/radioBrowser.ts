@@ -111,6 +111,16 @@ export function mapStation(r: RawStation): DirectoryStation {
   };
 }
 
+let egCache: { at: number; data: DirectoryStation[] } | null = null;
+/** Every Egyptian listing (~300), cached for an hour per server instance. */
+export async function egyptAll(): Promise<DirectoryStation[]> {
+  if (egCache && Date.now() - egCache.at < 60 * 60 * 1000) return egCache.data;
+  const raw = await rb<RawStation[]>("/json/stations/bycountrycodeexact/EG?hidebroken=false&limit=1000");
+  const data = raw.map(mapStation);
+  egCache = { at: Date.now(), data };
+  return data;
+}
+
 export async function byUuids(uuids: string[]): Promise<DirectoryStation[]> {
   const clean = uuids.filter((u) => /^[0-9a-f-]{36}$/i.test(u)).slice(0, 50);
   if (!clean.length) return [];

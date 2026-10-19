@@ -30,3 +30,17 @@ describe("strict candidate rules", () => {
     expect(identityStillMatches(quran, rec({ name: "إذاعة القرآن الكريم", countrycode: "IR" }))).toBe(false);
   });
 });
+
+describe("prefix-matched listings", () => {
+  it("9090: accepted on official homepage or name; refused when repurposed", () => {
+    const s = catalogById.get("eg-9090")!;
+    expect(identityStillMatches(s, rec({ name: "Radio 9090 90.9", homepage: "http://www.9090.fm/" }))).toBe(true);
+    expect(identityStillMatches(s, rec({ name: "Other", homepage: "https://spam.example" }))).toBe(false);
+  });
+  it("every verified catalog station has a UUID or prefix plus a homepage rule", () => {
+    for (const c of [...catalogById.values()].filter((c) => c.identity.status === "catalog-verified")) {
+      expect(c.radioBrowserUuid || c.rbUuidPrefixes?.length).toBeTruthy();
+      expect(c.match?.homepageHints?.length).toBeGreaterThan(0);
+    }
+  });
+});

@@ -41,6 +41,8 @@ export function catalogEntries(s: Pick<AppState, "bindings" | "playback" | "cust
  * Directory records that ARE a catalog station (same verified UUID or the user's confirmed binding)
  * are folded into the catalog entry instead of appearing twice.
  */
+const MAX_DIRECTORY = 20;
+
 export function runSearch(
   raw: string,
   filters: Filters,
@@ -51,8 +53,13 @@ export function runSearch(
   const q = parseQuery(raw);
   const effective: Filters = { ...filters };
   const ownUuids = new Set<string>();
-  for (const c of CATALOG) if (c.radioBrowserUuid) ownUuids.add(c.radioBrowserUuid);
+  const ownPrefixes: string[] = [];
+  for (const c of CATALOG) {
+    if (c.radioBrowserUuid) ownUuids.add(c.radioBrowserUuid);
+    for (const p of c.rbUuidPrefixes ?? []) ownPrefixes.push(p.toLowerCase());
+  }
   for (const b of Object.values(s.bindings)) ownUuids.add(b.rbUuid);
+  const isOwn = (uuid: string) => ownUuids.has(uuid) || ownPrefixes.some((p) => uuid.toLowerCase().startsWith(p));
 
   const results: SearchResult[] = [];
   for (const e of catalogEntries(s)) {
@@ -61,7 +68,8 @@ export function runSearch(
     if (score > 0) results.push({ entry: e, score });
   }
 
-  const groups = dedupe(directoryList.filter((d) => !ownUuids.has(d.uuid) && (d.urlResolved || d.url)));
+  const groups = dedupe(directoryList.filter((d) => !isOwn(d.uuid) && (d.urlResolved || d.url)));
+  const dirResults: SearchResult[] = [];
   for (const g of groups) {
     const d = g[0]!;
     const key = `rb:${d.uuid}`;
@@ -79,10 +87,12 @@ export function runSearch(
       directory: d,
     };
     if (!passesFilters(e, effective)) continue;
-    // Directory already matched the text server-side; still score for ranking, with a floor.
-    const score = Math.max(scoreEntry(q, e, now), 0.5);
-    results.push({ entry: e, score, group: g });
+    // Directory entries must match the query text themselves (no score floor), and are capped so
+    // a broad query can't bury the catalog under dozens of near-identical listings.
+    const score = scoreEntry(q, e, now);
+    if (score > 0) dirResults.push({ entry: e, score, group: g });
   }
+  results.push(...dirResults.sort((a, b) => b.score - a.score).slice(0, MAX_DIRECTORY));
 
   return results.sort((a, b) => b.score - a.score).slice(0, 60);
 }

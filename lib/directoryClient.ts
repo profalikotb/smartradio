@@ -43,6 +43,7 @@ async function call(params: Record<string, string>, signal?: AbortSignal, timeou
 export const directory = {
   search: (q: string, country: string | undefined, signal?: AbortSignal) => call(country ? { q, country } : { q }, signal),
   byUuids: (uuids: string[], signal?: AbortSignal) => call({ uuids: uuids.join(",") }, signal),
+  byPrefixes: (prefixes: string[], signal?: AbortSignal) => call({ prefixes: prefixes.join(",") }, signal, 12000),
   candidates: (catalogId: string, signal?: AbortSignal) => call({ candidates: catalogId }, signal, 15000),
   invalidate: () => cache.clear(),
 };

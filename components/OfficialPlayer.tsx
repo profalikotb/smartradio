@@ -17,6 +17,12 @@ export function OfficialPlayerButton({ id, small }: { id: string; small?: boolea
     return () => window.removeEventListener("keydown", k);
   }, [open]);
   if (!op) return null;
+  if (!op.embedUrl)
+    return (
+      <a className={`btn ${small ? "btn-sm" : ""}`} href={op.pageUrl} target="_blank" rel="noopener noreferrer" onClick={() => player().stop()}>
+        <Icon name="globe" size={14} /> {t.officialPage}
+      </a>
+    );
   return (
     <>
       <button

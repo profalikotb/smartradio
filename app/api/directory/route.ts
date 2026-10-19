@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { byUuids, searchByName, DirectoryUnavailable } from "@/lib/server/radioBrowser";
+import { byUuids, egyptAll, searchByName, DirectoryUnavailable } from "@/lib/server/radioBrowser";
 import { catalogById } from "@/lib/catalog";
 import { isCandidate } from "@/lib/match";
 import type { DirectoryStation } from "@/lib/types";
@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/directory?q=<text>&country=EG         → name search (merged Arabic variants)
  * GET /api/directory?uuids=<uuid,uuid>           → live records for known stations
+ * GET /api/directory?prefixes=<8hex,8hex>        → Egyptian records whose UUID starts with a prefix
  * GET /api/directory?candidates=<catalogId>      → strict Egypt-only candidates for a catalog station
  * Metadata only. Protected by middleware (session cookie).
  */
@@ -17,7 +18,10 @@ export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
   try {
     let stations: DirectoryStation[] = [];
-    if (p.get("uuids")) {
+    if (p.get("prefixes")) {
+      const pre = p.get("prefixes")!.split(",").filter((x) => /^[0-9a-f-]{8,36}$/i.test(x)).slice(0, 20);
+      stations = pre.length ? (await egyptAll()).filter((d) => pre.some((x) => d.uuid.startsWith(x.toLowerCase()))) : [];
+    } else if (p.get("uuids")) {
       stations = await byUuids(p.get("uuids")!.split(","));
     } else if (p.get("candidates")) {
       const st = catalogById.get(p.get("candidates")!);

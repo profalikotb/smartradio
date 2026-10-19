@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { CoreButton, StationRow } from "@/components/Stations";
-import { CORE_IDS } from "@/lib/catalog";
+import { CATALOG, CORE_IDS } from "@/lib/catalog";
 import { player, useController, usePlayer } from "@/lib/player/controller";
 import { useAppState } from "@/lib/store";
 import { displayName, viewOf } from "@/lib/stations";
@@ -96,6 +96,17 @@ export default function Home() {
           )}
         </section>
       )}
+
+      <section aria-labelledby="eg-h">
+        <h2 id="eg-h" className="section-title">{lang === "ar" ? "المحطات المصرية" : "Egyptian stations"}</h2>
+        <ul className="station-list">
+          {CATALOG.filter((c) => !c.core)
+            .sort((a, b) => Number(b.identity.status === "catalog-verified") - Number(a.identity.status === "catalog-verified"))
+            .map((c) => (
+              <StationRow key={c.id} id={c.id} />
+            ))}
+        </ul>
+      </section>
 
       {mounted && recent.length > 0 && (
         <section aria-labelledby="rec-h">

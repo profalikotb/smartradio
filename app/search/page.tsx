@@ -35,7 +35,8 @@ export default function SearchPage() {
   useEffect(() => {
     const parsed = parseQuery(q);
     const text = parsed.terms.join(" ");
-    if (text.length < 2) {
+    // Directory lookups start at 3 characters; shorter input searches the local catalog only.
+    if (text.length < 3) {
       setDir([]);
       setDirState("idle");
       return;

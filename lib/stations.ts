@@ -134,12 +134,19 @@ export async function resolveStation(id: string, signal?: AbortSignal): Promise<
   const c = catalogById.get(id);
 
   if (c) {
-    if (c.radioBrowserUuid) {
+    if (c.radioBrowserUuid || c.rbUuidPrefixes?.length) {
       try {
-        const recs = await directory.byUuids([c.radioBrowserUuid], signal);
-        const rec = recs[0];
-        if (!rec) return fallbackOr(id, { ok: false, reason: "not-found" });
-        if (!identityStillMatches(c, rec)) return { ok: false, reason: "identity-mismatch", detail: rec.homepage };
+        const [byId, byPre] = await Promise.all([
+          c.radioBrowserUuid ? directory.byUuids([c.radioBrowserUuid], signal) : Promise.resolve([]),
+          c.rbUuidPrefixes?.length ? directory.byPrefixes(c.rbUuidPrefixes, signal).catch(() => []) : Promise.resolve([]),
+        ]);
+        const all = [...byId, ...byPre.filter((d) => !byId.some((x) => x.uuid === d.uuid))];
+        if (!all.length) return fallbackOr(id, { ok: false, reason: "not-found" });
+        const good = all.filter((d) => identityStillMatches(c, d));
+        if (!good.length) return { ok: false, reason: "identity-mismatch", detail: all[0]!.homepage };
+        // Healthy listings first; their streams are merged (HTTPS variants before HTTP).
+        good.sort((a, b) => Number(b.lastcheckok) - Number(a.lastcheckok));
+        const rec = good[0]!;
         const station: PlayableStation = {
           id,
           nameAr: c.nameAr,
@@ -149,7 +156,7 @@ export async function resolveStation(id: string, signal?: AbortSignal): Promise<
           website: c.website,
           logo: rec.favicon || undefined,
           identity: "catalog-verified",
-          streams: streamsFrom([rec]),
+          streams: streamsFrom(good),
         };
         update((st) => ({ ...st, known: { ...st.known, [id]: station } }));
         return { ok: true, station, fromCache: false };
