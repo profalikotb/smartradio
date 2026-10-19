@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { verifyPassword } from "@/lib/server/password";
+import { isValidHashFormat, verifyPassword } from "@/lib/server/password";
 import { createSessionToken, isConfigured, SESSION_COOKIE, sessionDays } from "@/lib/server/session";
 
 export const runtime = "nodejs";
@@ -12,6 +12,8 @@ const MAX = 8;
 
 export async function POST(req: NextRequest) {
   if (!isConfigured()) return NextResponse.json({ error: "not-configured" }, { status: 503 });
+  // A malformed APP_PASSWORD_HASH would otherwise look like "wrong password" forever.
+  if (!isValidHashFormat(process.env.APP_PASSWORD_HASH)) return NextResponse.json({ error: "bad-hash" }, { status: 503 });
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const now = Date.now();
   const a = attempts.get(ip);
