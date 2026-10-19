@@ -20,13 +20,18 @@ export function isCandidate(station: CatalogStation, d: DirectoryStation): boole
   return true;
 }
 
-/** Checks that the live record behind a verified UUID still looks like the station we verified. */
+/**
+ * Checks that the live record behind a verified UUID still looks like the station we verified.
+ * The UUID itself is the verified identity; this only guards against the record being repurposed.
+ * Requires Egypt AND (official homepage OR the station's name pattern). Directory homepages are often
+ * blank, http:// or a social page, so the homepage alone is not required.
+ */
 export function identityStillMatches(station: CatalogStation, d: DirectoryStation): boolean {
   if (d.countrycode !== "EG") return false;
-  const hints = station.match?.homepageHints;
-  if (hints?.length) {
-    const host = hostOf(d.homepage);
-    return hints.some((h) => host === h || host.endsWith("." + h));
-  }
-  return true;
+  const hints = station.match?.homepageHints ?? [];
+  const host = hostOf(d.homepage);
+  const homepageOk = hints.length === 0 || hints.some((h) => host === h || host.endsWith("." + h));
+  const name = normalize(d.name);
+  const nameOk = (station.match?.names ?? []).some((p) => name.includes(normalize(p)));
+  return homepageOk || nameOk;
 }
