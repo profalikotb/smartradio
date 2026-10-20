@@ -5,10 +5,10 @@ import { Icon } from "./Icon";
 import { player } from "@/lib/player/controller";
 import { useAppState, update } from "@/lib/store";
 import { displayName, viewOf, type StationView } from "@/lib/stations";
-import { togglePin, toggleFavorite } from "@/lib/state";
+import { deleteStation, togglePin, toggleFavorite } from "@/lib/state";
 import { useLang, useT } from "@/lib/ui";
 import { isActive, LiveBadge, statusLabel, useUiStatus } from "./Player";
-import { fmtDateTime } from "@/lib/i18n";
+import { fmt, fmtDateTime } from "@/lib/i18n";
 import { hasEmbed, openEmbed } from "./OfficialPlayer";
 import type { Category } from "@/lib/types";
 
@@ -68,9 +68,10 @@ export function CoreButton({ id }: { id: string }) {
   const lang = useLang();
   const nick = useAppState((s) => s.nicknames);
   useAppState((s) => s.bindings[id]); // re-render when a stream gets bound
+  const hidden = useAppState((s) => s.hidden.includes(id));
   const v = viewOf(id);
   const { current, ui, info } = useStationStatus(id);
-  if (!v) return null;
+  if (!v || hidden) return null;
   const active = current && ui && isActive(ui.status);
   const failed = current && ui && (ui.status === "unavailable" || ui.status === "resolve-failed");
   const embed = v.identity === "unverified" && hasEmbed(id);
@@ -93,9 +94,9 @@ export function CoreButton({ id }: { id: string }) {
             ) : unverifiedNoStream ? (
               t.unverified
             ) : embed ? (
-              <>{v.frequency ?? t.categories[v.category]}</>
+              <bdi dir="ltr">{v.frequency ?? t.categories[v.category]}</bdi>
             ) : (
-              <>{v.frequency ?? t.categories[v.category]}</>
+              <bdi dir="ltr">{v.frequency ?? t.categories[v.category]}</bdi>
             )}
           </span>
         </span>
@@ -130,9 +131,10 @@ export function StationRow({ id, view, extra, onPlay, onRemember }: { id: string
   const nick = useAppState((s) => s.nicknames);
   const fav = useAppState((s) => s.favorites.includes(id));
   const pinned = useAppState((s) => s.pinned.includes(id));
+  const hidden = useAppState((s) => s.hidden.includes(id));
   const v = view ?? viewOf(id);
   const { current, ui } = useStationStatus(id);
-  if (!v) return null;
+  if (!v || hidden) return null;
   const active = current && ui && isActive(ui.status);
   // Stations published only as the broadcaster's live player play in the in-app player window.
   const embed = v.identity === "unverified" && hasEmbed(id);
@@ -172,6 +174,20 @@ export function StationRow({ id, view, extra, onPlay, onRemember }: { id: string
         <Link className="icon-btn" href={`/station/${encodeURIComponent(id)}`} aria-label={t.details} onClick={() => onRemember?.()}>
           <Icon name="info" />
         </Link>
+        <button
+          className="icon-btn icon-danger"
+          aria-label={t.deleteStation}
+          title={t.deleteStation}
+          onClick={() => {
+            const n = displayName(v, lang, nick);
+            if (!confirm(fmt(id.startsWith("custom:") ? t.deleteConfirmCustom : t.deleteConfirm, { n }))) return;
+            if (current) player().stop();
+            onRemember?.();
+            update((s) => deleteStation(s, id));
+          }}
+        >
+          <Icon name="trash" />
+        </button>
       </span>
     </li>
   );

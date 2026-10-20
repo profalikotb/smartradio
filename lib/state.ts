@@ -45,6 +45,7 @@ export interface AppState {
   groups: Group[];
   recent: { id: string; at: number }[];
   custom: CustomStation[];
+  hidden: string[]; // stations the user deleted (catalog/directory); custom ones are removed outright
   bindings: Record<string, Binding>;
   known: Record<string, PlayableStation>; // snapshot of directory stations the user interacted with
   playback: Record<string, PlaybackInfo>;
@@ -70,6 +71,7 @@ export function emptyState(): AppState {
     groups: [],
     recent: [],
     custom: [],
+    hidden: [],
     bindings: {},
     known: {},
     playback: {},
@@ -161,6 +163,33 @@ export function toggleInGroup(s: AppState, groupId: string, stationId: string): 
         ? g
         : { ...g, stationIds: g.stationIds.includes(stationId) ? g.stationIds.filter((x) => x !== stationId) : [...g.stationIds, stationId] },
     ),
+  };
+}
+
+/** Delete a station everywhere. Custom stations are erased; others are hidden (restorable). */
+export function deleteStation(s: AppState, id: string): AppState {
+  const drop = (a: string[]) => a.filter((x) => x !== id);
+  const base: AppState = {
+    ...s,
+    favorites: drop(s.favorites),
+    pinned: drop(s.pinned),
+    recent: s.recent.filter((r) => r.id !== id),
+    groups: s.groups.map((g) => ({ ...g, stationIds: drop(g.stationIds) })),
+    settings: s.settings.lastStationId === id ? { ...s.settings, lastStationId: undefined } : s.settings,
+  };
+  if (id.startsWith("custom:")) return { ...base, custom: s.custom.filter((c) => `custom:${c.id}` !== id) };
+  return { ...base, hidden: s.hidden.includes(id) ? s.hidden : [...s.hidden, id] };
+}
+
+export function restoreStation(s: AppState, id: string): AppState {
+  return { ...s, hidden: s.hidden.filter((x) => x !== id) };
+}
+
+export function addCustomStation(s: AppState, name: string, url: string, id = Date.now().toString(36)): AppState {
+  return {
+    ...s,
+    custom: [...s.custom, { id, name: name.trim().slice(0, 80), url, createdAt: new Date().toISOString() }],
+    favorites: [...s.favorites, `custom:${id}`],
   };
 }
 
@@ -258,6 +287,7 @@ export function importState(current: AppState, raw: unknown): AppState {
       ? d.recent.filter((r) => r && isStr(r.id) && typeof r.at === "number").slice(0, 20)
       : current.recent,
     custom,
+    hidden: isStrArr(d.hidden) ? uniq(d.hidden) : current.hidden,
     bindings,
     known,
     settings,
@@ -277,7 +307,7 @@ export function hydrate(raw: string | null): AppState {
       schema: SCHEMA,
       seedVersion: typeof p.seedVersion === "number" ? p.seedVersion : 0,
     };
-    for (const k of ["favorites", "pinned", "groups", "recent", "custom"] as const) if (!Array.isArray(s[k])) (s as unknown as Record<string, unknown>)[k] = [];
+    for (const k of ["favorites", "pinned", "groups", "recent", "custom", "hidden"] as const) if (!Array.isArray(s[k])) (s as unknown as Record<string, unknown>)[k] = [];
     return applySeeds(s);
   } catch {
     return applySeeds(emptyState());

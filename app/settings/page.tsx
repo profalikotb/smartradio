@@ -2,12 +2,16 @@
 import { Icon } from "@/components/Icon";
 import { VolumeControl } from "@/components/Player";
 import { update, useAppState } from "@/lib/store";
+import { restoreStation } from "@/lib/state";
+import { displayName, viewOf } from "@/lib/stations";
 import type { Settings } from "@/lib/state";
 import { useT } from "@/lib/ui";
 
 export default function SettingsPage() {
   const t = useT();
   const st = useAppState((s) => s.settings);
+  const hidden = useAppState((s) => s.hidden);
+  const nick = useAppState((s) => s.nicknames);
   const set = (p: Partial<Settings>) => update((s) => ({ ...s, settings: { ...s.settings, ...p } }));
 
   return (
@@ -53,6 +57,29 @@ export default function SettingsPage() {
           <span>{t.volume}</span>
           <VolumeControl />
         </div>
+      </section>
+
+      <section className="panel">
+        <h2 className="section-title">
+          <Icon name="trash" size={18} /> {t.deletedStations}
+        </h2>
+        {hidden.length === 0 ? (
+          <p className="hint">{t.noneDeleted}</p>
+        ) : (
+          <ul className="stream-list">
+            {hidden.map((id) => {
+              const v = viewOf(id);
+              return (
+                <li key={id}>
+                  <span>{v ? displayName(v, st.lang, nick) : id}</span>
+                  <button className="btn btn-sm" onClick={() => update((s) => restoreStation(s, id))}>
+                    {t.restore}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <section className="panel">

@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
+import { AddStationForm } from "@/components/AddStation";
+import { useState } from "react";
 import { CoreButton, StationRow } from "@/components/Stations";
 import { CATALOG, CORE_IDS } from "@/lib/catalog";
 import { player, useController, usePlayer } from "@/lib/player/controller";
@@ -19,6 +21,7 @@ export default function Home() {
   const lastId = useAppState((s) => s.settings.lastStationId);
   const nick = useAppState((s) => s.nicknames);
   const snap = usePlayer();
+  const [adding, setAdding] = useState(false);
   const ctl = useController();
 
   const otherPinned = pinned.filter((id) => !(CORE_IDS as readonly string[]).includes(id));
@@ -98,7 +101,17 @@ export default function Home() {
       )}
 
       <section aria-labelledby="eg-h">
-        <h2 id="eg-h" className="section-title">{lang === "ar" ? "المحطات المصرية" : "Egyptian stations"}</h2>
+        <h2 id="eg-h" className="section-title">
+          {lang === "ar" ? "المحطات المصرية" : "Egyptian stations"}
+          <button className="btn btn-sm btn-gold" onClick={() => setAdding((a) => !a)} aria-expanded={adding}>
+            <Icon name={adding ? "close" : "plus"} size={14} /> {t.addStation}
+          </button>
+        </h2>
+        {adding && (
+          <div className="panel">
+            <AddStationForm onDone={() => setAdding(false)} />
+          </div>
+        )}
         <ul className="station-list">
           {CATALOG.filter((c) => !c.core)
             .sort((a, b) => Number(b.identity.status === "catalog-verified") - Number(a.identity.status === "catalog-verified"))

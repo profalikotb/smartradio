@@ -1714,3 +1714,10 @@ details.tech > summary::before {
 details.tech[open] > summary::before {
   content: "▾";
 }
+.icon-btn.icon-danger:hover:not(:disabled) {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+.stream-list li > .btn {
+  margin-inline-start: auto;
+}

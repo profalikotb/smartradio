@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { StationRow } from "@/components/Stations";
+import { AddStationForm } from "@/components/AddStation";
 import { replaceState, getState, update, useAppState } from "@/lib/store";
 import { exportState, importState, ImportError, moveFavorite, removeGroup, setNickname, toggleInGroup, upsertGroup } from "@/lib/state";
 import { viewOf } from "@/lib/stations";
@@ -194,48 +195,10 @@ export default function FavoritesPage() {
 
 function CustomStationForm() {
   const t = useT();
-  const [name, setName] = useState("");
-  const [url, setUrl] = useState("");
-  const [err, setErr] = useState("");
-  let warn = "";
-  try {
-    if (url && new URL(url).protocol === "http:") warn = t.httpWarn;
-  } catch {
-    /* invalid while typing */
-  }
   return (
     <section className="panel">
       <h2 className="section-title">{t.addCustom}</h2>
-      <form
-        className="stack"
-        onSubmit={(e) => {
-          e.preventDefault();
-          let u: URL;
-          try {
-            u = new URL(url.trim());
-            if (u.protocol !== "https:" && u.protocol !== "http:") throw new Error();
-          } catch {
-            return setErr(t.invalidUrl);
-          }
-          const id = Date.now().toString(36);
-          update((s) => ({
-            ...s,
-            custom: [...s.custom, { id, name: name.trim().slice(0, 80) || u.hostname, url: u.toString(), createdAt: new Date().toISOString() }],
-            favorites: [...s.favorites, `custom:${id}`],
-          }));
-          setName("");
-          setUrl("");
-          setErr("");
-        }}
-      >
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.name} aria-label={t.name} maxLength={80} />
-        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" aria-label={t.streamUrl} inputMode="url" dir="ltr" autoCapitalize="off" autoCorrect="off" />
-        {(err || warn) && <p className="hint warn">{err || warn}</p>}
-        <button className="btn btn-gold" type="submit" disabled={!url}>
-          <Icon name="plus" size={16} /> {t.add}
-        </button>
-      </form>
+      <AddStationForm />
     </section>
   );
 }
-

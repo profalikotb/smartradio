@@ -95,3 +95,32 @@ describe("export / import", () => {
     expect(r.settings.lang).toBe("ar");
   });
 });
+
+import { addCustomStation, deleteStation, restoreStation } from "@/lib/state";
+describe("delete / add / restore stations", () => {
+  it("deleting a catalog station removes it everywhere and survives reload; restore brings it back", () => {
+    let s = hydrate(null);
+    s = deleteStation(s, AL_AGHANI_ID);
+    expect(s.favorites).not.toContain(AL_AGHANI_ID);
+    expect(s.pinned).not.toContain(AL_AGHANI_ID);
+    expect(s.groups.every((g) => !g.stationIds.includes(AL_AGHANI_ID))).toBe(true);
+    s = reload(s);
+    expect(s.hidden).toContain(AL_AGHANI_ID);
+    expect(s.favorites).not.toContain(AL_AGHANI_ID); // seeds never re-add it
+    s = restoreStation(s, AL_AGHANI_ID);
+    expect(s.hidden).not.toContain(AL_AGHANI_ID);
+  });
+  it("adding then deleting a custom station erases it completely", () => {
+    let s = addCustomStation(hydrate(null), "My Station", "https://x.example/live", "abc");
+    expect(s.favorites).toContain("custom:abc");
+    s = deleteStation(reload(s), "custom:abc");
+    expect(s.custom).toHaveLength(0);
+    expect(s.favorites).not.toContain("custom:abc");
+    expect(s.hidden).not.toContain("custom:abc");
+  });
+  it("deleted list is included in export/import", () => {
+    const s = deleteStation(hydrate(null), "eg-mega");
+    const r = importState(emptyState(), JSON.parse(JSON.stringify(exportState(s))));
+    expect(r.hidden).toEqual(["eg-mega"]);
+  });
+});
