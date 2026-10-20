@@ -5,7 +5,7 @@ import { Icon } from "./Icon";
 import { player } from "@/lib/player/controller";
 import { useAppState, update } from "@/lib/store";
 import { displayName, viewOf, type StationView } from "@/lib/stations";
-import { deleteStation, togglePin, toggleFavorite } from "@/lib/state";
+import { deleteStation, moveCore, toggleCore, togglePin, toggleFavorite } from "@/lib/state";
 import { useLang, useT } from "@/lib/ui";
 import { isActive, LiveBadge, statusLabel, useUiStatus } from "./Player";
 import { fmt, fmtDateTime } from "@/lib/i18n";
@@ -63,15 +63,17 @@ export function useStationStatus(id: string) {
   return { current, ui: current ? ui : null, info };
 }
 
-export function CoreButton({ id }: { id: string }) {
+export function CoreButton({ id, editing = false }: { id: string; editing?: boolean }) {
   const t = useT();
   const lang = useLang();
   const nick = useAppState((s) => s.nicknames);
   useAppState((s) => s.bindings[id]); // re-render when a stream gets bound
   const hidden = useAppState((s) => s.hidden.includes(id));
+  const core = useAppState((s) => s.core);
   const v = viewOf(id);
   const { current, ui, info } = useStationStatus(id);
   if (!v || hidden) return null;
+  const pos = core.indexOf(id);
   const active = current && ui && isActive(ui.status);
   const failed = current && ui && (ui.status === "unavailable" || ui.status === "resolve-failed");
   const embed = v.identity === "unverified" && hasEmbed(id);
@@ -104,7 +106,34 @@ export function CoreButton({ id }: { id: string }) {
           <Icon name={active ? "stop" : "play"} size={30} />
         </span>
       </button>
-      {!embed && (failed || (!current && info?.lastError && !info.lastOkAt) || unverifiedNoStream) && (
+      {editing && (
+        <div className="core-edit">
+          <button className="icon-btn" disabled={pos <= 0} onClick={() => update((s) => moveCore(s, id, -1))} aria-label={t.moveUp} title={t.moveUp}>
+            <Icon name="up" />
+          </button>
+          <button className="icon-btn" disabled={pos < 0 || pos >= core.length - 1} onClick={() => update((s) => moveCore(s, id, 1))} aria-label={t.moveDown} title={t.moveDown}>
+            <Icon name="down" />
+          </button>
+          <span className="spacer" />
+          <button className="btn btn-sm" onClick={() => update((s) => toggleCore(s, id))} title={t.removeFromCore} aria-label={t.removeFromCore}>
+            <Icon name="close" size={14} /> {t.removeShort}
+          </button>
+          <button
+            className="btn btn-sm btn-danger"
+            title={t.deleteStation}
+            aria-label={t.deleteStation}
+            onClick={() => {
+              const n = displayName(v, lang, nick);
+              if (!confirm(fmt(id.startsWith("custom:") ? t.deleteConfirmCustom : t.deleteConfirm, { n }))) return;
+              if (current) player().stop();
+              update((s) => deleteStation(s, id));
+            }}
+          >
+            <Icon name="trash" size={14} /> {t.deleteShort}
+          </button>
+        </div>
+      )}
+      {!editing && !embed && (failed || (!current && info?.lastError && !info.lastOkAt) || unverifiedNoStream) && (
         <div className="core-foot">
           <span className="muted small">
             {current && ui?.message ? ui.message : unverifiedNoStream ? t.resolve.unverified : info?.lastErrorAt ? `${t.status.unavailable} · ${fmtDateTime(info.lastErrorAt, lang)}` : ""}

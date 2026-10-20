@@ -1,5 +1,5 @@
 /** Pure state model + reducers. No browser APIs here, so everything is unit-testable. */
-import { AL_AGHANI_ID, QURAN_CAIRO_ID } from "./catalog";
+import { AL_AGHANI_ID, CORE_IDS, QURAN_CAIRO_ID } from "./catalog";
 import type { CustomStation, Lang, PlayableStation, StreamRef } from "./types";
 
 export const SCHEMA = 1;
@@ -45,6 +45,7 @@ export interface AppState {
   groups: Group[];
   recent: { id: string; at: number }[];
   custom: CustomStation[];
+  core: string[]; // المحطات الأساسية: user-editable, ordered
   hidden: string[]; // stations the user deleted (catalog/directory); custom ones are removed outright
   bindings: Record<string, Binding>;
   known: Record<string, PlayableStation>; // snapshot of directory stations the user interacted with
@@ -71,6 +72,7 @@ export function emptyState(): AppState {
     groups: [],
     recent: [],
     custom: [],
+    core: [...CORE_IDS],
     hidden: [],
     bindings: {},
     known: {},
@@ -173,6 +175,7 @@ export function deleteStation(s: AppState, id: string): AppState {
     ...s,
     favorites: drop(s.favorites),
     pinned: drop(s.pinned),
+    core: drop(s.core),
     recent: s.recent.filter((r) => r.id !== id),
     groups: s.groups.map((g) => ({ ...g, stationIds: drop(g.stationIds) })),
     settings: s.settings.lastStationId === id ? { ...s.settings, lastStationId: undefined } : s.settings,
@@ -185,12 +188,28 @@ export function restoreStation(s: AppState, id: string): AppState {
   return { ...s, hidden: s.hidden.filter((x) => x !== id) };
 }
 
-export function addCustomStation(s: AppState, name: string, url: string, id = Date.now().toString(36)): AppState {
+export function addCustomStation(s: AppState, name: string, url: string, id = Date.now().toString(36), toCore = false): AppState {
+  const key = `custom:${id}`;
   return {
     ...s,
     custom: [...s.custom, { id, name: name.trim().slice(0, 80), url, createdAt: new Date().toISOString() }],
-    favorites: [...s.favorites, `custom:${id}`],
+    favorites: [...s.favorites, key],
+    core: toCore ? [...s.core, key] : s.core,
   };
+}
+
+/** Add to / remove from المحطات الأساسية (does not delete the station). */
+export function toggleCore(s: AppState, id: string): AppState {
+  return { ...s, core: s.core.includes(id) ? s.core.filter((x) => x !== id) : [...s.core, id], hidden: s.hidden.filter((x) => x !== id) };
+}
+
+export function moveCore(s: AppState, id: string, delta: number): AppState {
+  const i = s.core.indexOf(id);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= s.core.length) return s;
+  const core = [...s.core];
+  [core[i], core[j]] = [core[j]!, core[i]!];
+  return { ...s, core };
 }
 
 export function removeGroup(s: AppState, groupId: string): AppState {
@@ -287,6 +306,7 @@ export function importState(current: AppState, raw: unknown): AppState {
       ? d.recent.filter((r) => r && isStr(r.id) && typeof r.at === "number").slice(0, 20)
       : current.recent,
     custom,
+    core: isStrArr(d.core) ? uniq(d.core).slice(0, 30) : current.core,
     hidden: isStrArr(d.hidden) ? uniq(d.hidden) : current.hidden,
     bindings,
     known,
@@ -307,6 +327,8 @@ export function hydrate(raw: string | null): AppState {
       schema: SCHEMA,
       seedVersion: typeof p.seedVersion === "number" ? p.seedVersion : 0,
     };
+    // Users from before the editable core list get the original defaults once.
+    if (!Array.isArray(p.core)) s.core = [...CORE_IDS];
     for (const k of ["favorites", "pinned", "groups", "recent", "custom", "hidden"] as const) if (!Array.isArray(s[k])) (s as unknown as Record<string, unknown>)[k] = [];
     return applySeeds(s);
   } catch {

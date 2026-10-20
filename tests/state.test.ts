@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AL_AGHANI_ID, QURAN_CAIRO_ID } from "@/lib/catalog";
-import {
-  applySeeds, emptyState, exportState, hydrate, importState, ImportError, moveFavorite, toggleFavorite, addRecent, CURRENT_SEED, type AppState,
-} from "@/lib/state";
+import { CURRENT_SEED, ImportError, addCustomStation, addRecent, applySeeds, deleteStation, emptyState, exportState, hydrate, importState, moveCore, moveFavorite, toggleCore, toggleFavorite, type AppState } from "@/lib/state";
 
 const reload = (s: AppState) => hydrate(JSON.stringify(s)); // simulates app restart / update
 
@@ -96,7 +94,7 @@ describe("export / import", () => {
   });
 });
 
-import { addCustomStation, deleteStation, restoreStation } from "@/lib/state";
+import { restoreStation } from "@/lib/state";
 describe("delete / add / restore stations", () => {
   it("deleting a catalog station removes it everywhere and survives reload; restore brings it back", () => {
     let s = hydrate(null);
@@ -122,5 +120,34 @@ describe("delete / add / restore stations", () => {
     const s = deleteStation(hydrate(null), "eg-mega");
     const r = importState(emptyState(), JSON.parse(JSON.stringify(exportState(s))));
     expect(r.hidden).toEqual(["eg-mega"]);
+  });
+});
+
+describe("editable core stations", () => {
+  it("defaults to Quran then Aghani, also for old saved state", () => {
+    expect(emptyState().core).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID]);
+    expect(hydrate(JSON.stringify({ favorites: [] })).core).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID]);
+  });
+  it("keeps the user's edited list (even empty) across reloads", () => {
+    const s = toggleCore(toggleCore(emptyState(), QURAN_CAIRO_ID), AL_AGHANI_ID);
+    expect(s.core).toEqual([]);
+    expect(hydrate(JSON.stringify(s)).core).toEqual([]);
+  });
+  it("adds, reorders, and drops on delete", () => {
+    let s = toggleCore(emptyState(), "eg-nogoum");
+    expect(s.core).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID, "eg-nogoum"]);
+    s = moveCore(s, "eg-nogoum", -1);
+    expect(s.core).toEqual([QURAN_CAIRO_ID, "eg-nogoum", AL_AGHANI_ID]);
+    expect(moveCore(s, QURAN_CAIRO_ID, -1)).toBe(s);
+    s = deleteStation(s, "eg-nogoum");
+    expect(s.core).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID]);
+    expect(s.hidden).toContain("eg-nogoum");
+    s = toggleCore(s, "eg-nogoum"); // re-adding un-hides
+    expect(s.hidden).not.toContain("eg-nogoum");
+  });
+  it("adds a new custom station straight into core and survives export/import", () => {
+    const s = addCustomStation(emptyState(), "X", "https://x.example/live", "abc", true);
+    expect(s.core.at(-1)).toBe("custom:abc");
+    expect(importState(emptyState(), exportState(s)).core).toEqual(s.core);
   });
 });

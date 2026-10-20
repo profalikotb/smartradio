@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { isActive, LiveBadge, statusLabel, useUiStatus } from "@/components/Player";
-import { CORE_IDS } from "@/lib/catalog";
 import { player } from "@/lib/player/controller";
 import { useAppState } from "@/lib/store";
 import { displayName, viewOf } from "@/lib/stations";
@@ -13,10 +12,12 @@ export default function DrivePage() {
   const lang = useLang();
   const mounted = useMounted();
   const favorites = useAppState((s) => s.favorites);
+  const core = useAppState((s) => s.core);
+  const hidden = useAppState((s) => s.hidden);
   const nick = useAppState((s) => s.nicknames);
   const ui = useUiStatus();
-  // Core stations first (fixed order), then the rest of the favorites in the user's order.
-  const ids = [...CORE_IDS, ...favorites.filter((id) => !(CORE_IDS as readonly string[]).includes(id))].slice(0, 8);
+  // Core stations first (user order), then the rest of the favorites in the user's order.
+  const ids = [...core, ...favorites.filter((id) => !core.includes(id))].filter((id) => !hidden.includes(id)).slice(0, 8);
   const active = isActive(ui.status);
 
   return (

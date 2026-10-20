@@ -6,7 +6,7 @@ import { addCustomStation } from "@/lib/state";
 import { useT } from "@/lib/ui";
 
 /** Add a station by name + stream URL. Saved on this device (included in Export). */
-export function AddStationForm({ onDone }: { onDone?: () => void }) {
+export function AddStationForm({ onDone, toCore = false }: { onDone?: () => void; toCore?: boolean }) {
   const t = useT();
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
@@ -29,7 +29,7 @@ export function AddStationForm({ onDone }: { onDone?: () => void }) {
         } catch {
           return setErr(t.invalidUrl);
         }
-        update((s) => addCustomStation(s, name.trim() || u.hostname, u.toString()));
+        update((s) => addCustomStation(s, name.trim() || u.hostname, u.toString(), undefined, toCore));
         setName("");
         setUrl("");
         setErr("");

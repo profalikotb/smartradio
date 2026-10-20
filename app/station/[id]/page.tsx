@@ -9,7 +9,7 @@ import { player } from "@/lib/player/controller";
 import { dedupe, hostOf } from "@/lib/search/rank";
 import { confirmBinding, displayName, playableFromDirectory, rememberDirectoryStation, removeBinding, viewOf } from "@/lib/stations";
 import { useAppState, update } from "@/lib/store";
-import { toggleFavorite } from "@/lib/state";
+import { toggleCore, toggleFavorite } from "@/lib/state";
 import type { DirectoryStation, StreamRef } from "@/lib/types";
 import { fmtDate, fmtDateTime } from "@/lib/i18n";
 import { useLang, useMounted, useT } from "@/lib/ui";
@@ -24,6 +24,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
   const known = useAppState((s) => s.known[id]);
   const binding = useAppState((s) => s.bindings[id]);
   const fav = useAppState((s) => s.favorites.includes(id));
+  const isCore = useAppState((s) => s.core.includes(id));
   const { current, ui, info } = useStationStatus(id);
   if (!mounted) return <div className="page" />;
   const v = viewOf(id);
@@ -44,7 +45,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
           </p>
           <p className="row gap-s wrap">
             {!(v.identity === "unverified" && (info?.lastOkAt || hasEmbed(id))) && <IdentityBadge v={v} />}
-            {c?.core && <span className="badge badge-gold">{t.core}</span>}
+            {isCore && <span className="badge badge-gold">{t.core}</span>}
             <span className="badge badge-neutral">{t.categories[v.category]}</span>
           </p>
         </div>
@@ -56,6 +57,9 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
         </button>
         <button className={`btn ${fav ? "is-on" : ""}`} onClick={() => update((s) => toggleFavorite(s, id))} aria-pressed={fav}>
           <Icon name="star" size={18} /> {fav ? t.removeFav : t.addFav}
+        </button>
+        <button className={`btn ${isCore ? "is-on" : ""}`} onClick={() => update((s) => toggleCore(s, id))} aria-pressed={isCore}>
+          <Icon name={isCore ? "close" : "plus"} size={18} /> {isCore ? t.removeFromCore : t.addToCore}
         </button>
         {current && ui && (
           <span className={`status-pill st-${ui.status}`}>

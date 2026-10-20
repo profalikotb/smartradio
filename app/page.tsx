@@ -4,7 +4,8 @@ import { Icon } from "@/components/Icon";
 import { AddStationForm } from "@/components/AddStation";
 import { useState } from "react";
 import { CoreButton, StationRow } from "@/components/Stations";
-import { CATALOG, CORE_IDS } from "@/lib/catalog";
+import { CATALOG } from "@/lib/catalog";
+import { CoreEditor } from "@/components/CoreEditor";
 import { player, useController, usePlayer } from "@/lib/player/controller";
 import { useAppState } from "@/lib/store";
 import { displayName, viewOf } from "@/lib/stations";
@@ -22,9 +23,11 @@ export default function Home() {
   const nick = useAppState((s) => s.nicknames);
   const snap = usePlayer();
   const [adding, setAdding] = useState(false);
+  const [editCore, setEditCore] = useState(false);
+  const core = useAppState((s) => s.core);
   const ctl = useController();
 
-  const otherPinned = pinned.filter((id) => !(CORE_IDS as readonly string[]).includes(id));
+  const otherPinned = pinned.filter((id) => !core.includes(id));
   const lastView = lastId ? viewOf(lastId) : null;
   const showResume = mounted && lastView && !snap.station && !ctl.pendingId;
 
@@ -51,12 +54,21 @@ export default function Home() {
       )}
 
       <section aria-labelledby="core-h">
-        <h2 id="core-h" className="section-title">{t.core}</h2>
+        <h2 id="core-h" className="section-title">
+          {t.core}
+          {mounted && (
+            <button className={`btn btn-sm ${editCore ? "btn-gold" : ""}`} onClick={() => setEditCore((e) => !e)} aria-expanded={editCore}>
+              <Icon name={editCore ? "close" : "edit"} size={14} /> {editCore ? t.doneEdit : t.editCore}
+            </button>
+          )}
+        </h2>
         <div className="core-grid">
-          {CORE_IDS.map((id) => (
-            <CoreButton key={id} id={id} />
+          {core.map((id) => (
+            <CoreButton key={id} id={id} editing={editCore} />
           ))}
         </div>
+        {mounted && core.length === 0 && !editCore && <p className="muted">{t.coreEmpty}</p>}
+        {mounted && editCore && <CoreEditor />}
       </section>
 
       <div className="quick-links">
@@ -113,7 +125,7 @@ export default function Home() {
           </div>
         )}
         <ul className="station-list">
-          {CATALOG.filter((c) => !c.core)
+          {CATALOG.filter((c) => !core.includes(c.id))
             .sort((a, b) => Number(b.identity.status === "catalog-verified") - Number(a.identity.status === "catalog-verified"))
             .map((c) => (
               <StationRow key={c.id} id={c.id} />
