@@ -43,9 +43,10 @@ export function Logo({ id, size = 48 }: { id?: string; size?: number }) {
   );
 }
 
-/** Has a stream link (from the Excel list, or replaced on this device). */
+/** Has a stream link (Excel list, replaced on this device, or found automatically for tribute stations). */
 export function hasStream(id: string): boolean {
-  return !!(catalogById.get(id)?.directStreams?.length || getState().streamOverrides[id]);
+  const c = catalogById.get(id);
+  return !!(c?.directStreams?.length || c?.match?.anyCountry || getState().streamOverrides[id]);
 }
 
 export function IdentityBadge({ v }: { v: Pick<StationView, "identity"> }) {

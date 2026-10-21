@@ -15,7 +15,8 @@
     "source": "https://e-quran.com/radio/",
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 2,
@@ -31,9 +32,10 @@
     "favourite": true,
     "core": null,
     "source": "https://www.maspero.eg/stream/13",
-    "notes": "User-provided URL; signed link may expire. Playback not checked.",
+    "notes": "User-provided URL; signed link may expire. Playback not checked. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": false
   },
   {
     "no": 3,
@@ -49,9 +51,10 @@
     "favourite": true,
     "core": null,
     "source": "https://www.maspero.eg/stream/10",
-    "notes": "Updated with user-provided URL on 21/10/2026; signed link may expire.",
+    "notes": "Updated with user-provided URL on 21/10/2026; signed link may expire. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": false
   },
   {
     "no": 5,
@@ -69,7 +72,8 @@
     "source": "https://egyptradio.net/9090/",
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 6,
@@ -87,7 +91,8 @@
     "source": "https://egyptradio.net/nagham-fm/",
     "notes": "Directory attribution; stream metadata says No Name.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 7,
@@ -105,7 +110,8 @@
     "source": "https://egyptradio.net/mega-fm-92-7/",
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 8,
@@ -123,7 +129,8 @@
     "source": "https://egyptradio.net/shaabi-95/",
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 9,
@@ -141,7 +148,8 @@
     "source": "https://egyptradio.net/nile-fm/",
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 10,
@@ -157,9 +165,10 @@
     "favourite": false,
     "core": null,
     "source": "https://www.maspero.eg/stream/9",
-    "notes": "No verified direct URL; video ID x8n6dqq. Searched 21/10/2026; no working direct URL verified.",
+    "notes": "No verified direct URL; video ID x8n6dqq. Searched 21/10/2026; no working direct URL verified. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": false
   },
   {
     "no": 11,
@@ -175,9 +184,10 @@
     "favourite": false,
     "core": null,
     "source": "https://www.maspero.eg/stream/16",
-    "notes": "No verified direct URL; video ID x8n6drt. Searched 21/10/2026; no working direct URL verified.",
+    "notes": "No verified direct URL; video ID x8n6drt. Searched 21/10/2026; no working direct URL verified. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": false
   },
   {
     "no": 14,
@@ -193,9 +203,10 @@
     "favourite": false,
     "core": null,
     "source": "https://www.maspero.eg/stream/12",
-    "notes": "No verified direct URL; video ID x8n6eci. Searched 21/10/2026; no working direct URL verified.",
+    "notes": "No verified direct URL; video ID x8n6eci. Searched 21/10/2026; no working direct URL verified. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": false
   },
   {
     "no": 16,
@@ -213,7 +224,8 @@
     "source": "https://www.nogoumfm.net/live-radio-stream/",
     "notes": "Official page embeds this source; metadata: Nogoum FM. Audio received; listening not tested.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 17,
@@ -231,7 +243,8 @@
     "source": "https://worldradioplayer.com/stations/egypt/radio-hits-88-2-cairo/",
     "notes": "Metadata: Radio Hits. Audio received; listening not tested.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 18,
@@ -249,7 +262,8 @@
     "source": "https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/EG",
     "notes": "Directory attribution; audio received. Station identity not confirmed by listening.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 19,
@@ -268,7 +282,8 @@
     "source": "https://quran-uni.com/radio/",
     "notes": "Sheikh Al-Sha'rawi tafsir radio (quran-uni.com). Second line = backup server listed on e-quran.com/pages/radio/imam-al-sharawi.html.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 20,
@@ -276,7 +291,8 @@
     "nameEn": null,
     "url": "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi",
     "urls": [
-      "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi"
+      "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi",
+      "https://serverkw.quran-uni.com:8074/;*.mp3"
     ],
     "format": "MP3",
     "result": "Listed in mp3quran.net radio API / not checked",
@@ -284,9 +300,10 @@
     "favourite": false,
     "core": null,
     "source": "https://mp3quran.net/api/v3/radios?language=ar",
-    "notes": "Mohamed Siddiq Al-Minshawi — murattal, 24/7 (mp3quran.net).",
+    "notes": "Murattal, 24/7. Line 1: mp3quran.net; line 2 (backup): quran-uni.com Minshawi radio (Hafs, murattal).",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 21,
@@ -304,7 +321,8 @@
     "source": "https://mp3quran.net/api/v3/radios?language=ar",
     "notes": "Mohamed Siddiq Al-Minshawi — mujawwad, 24/7 (mp3quran.net).",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
   },
   {
     "no": 22,
@@ -318,8 +336,66 @@
     "favourite": false,
     "core": null,
     "source": "https://radio.garden/listen/radio-oum-kalthoum/QNKcRjYa",
-    "notes": "Tribute stations exist (Morocco: oumkalthoumradio.ma; Zeno.FM) but no stream URL could be verified. In the app: station page → find stream (searches all countries). Paste a URL here when you have one.",
+    "notes": "No fixed link: the app finds and plays an Umm Kulthum listing automatically (e.g. Radio Oum Kalthoum, MAP Morocco). Paste a URL here to pin one.",
     "frequency": null,
-    "category": null
+    "category": null,
+    "show": true
+  },
+  {
+    "no": 23,
+    "name": "إذاعة الحصري",
+    "nameEn": null,
+    "url": "https://backup.qurango.net/radio/mahmoud_khalil_alhussary",
+    "urls": [
+      "https://backup.qurango.net/radio/mahmoud_khalil_alhussary"
+    ],
+    "format": "MP3",
+    "result": "Listed in mp3quran.net radio API / not checked",
+    "checkedOn": "22/10/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://mp3quran.net/api/v3/radios?language=ar",
+    "notes": "Mahmoud Khalil Al-Husary — murattal, 24/7.",
+    "frequency": null,
+    "category": null,
+    "show": true
+  },
+  {
+    "no": 24,
+    "name": "إذاعة الحصري مجود",
+    "nameEn": null,
+    "url": "https://backup.qurango.net/radio/mahmoud_khalil_alhussary_mojawwad",
+    "urls": [
+      "https://backup.qurango.net/radio/mahmoud_khalil_alhussary_mojawwad"
+    ],
+    "format": "MP3",
+    "result": "Listed in mp3quran.net radio API / not checked",
+    "checkedOn": "22/10/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://mp3quran.net/api/v3/radios?language=ar",
+    "notes": "Mahmoud Khalil Al-Husary — mujawwad, 24/7.",
+    "frequency": null,
+    "category": null,
+    "show": true
+  },
+  {
+    "no": 25,
+    "name": "إذاعة مصطفى إسماعيل",
+    "nameEn": null,
+    "url": "https://backup.qurango.net/radio/mustafa_ismail",
+    "urls": [
+      "https://backup.qurango.net/radio/mustafa_ismail"
+    ],
+    "format": "MP3",
+    "result": "Listed in mp3quran.net radio API / not checked",
+    "checkedOn": "22/10/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://mp3quran.net/api/v3/radios?language=ar",
+    "notes": "Mustafa Ismail, 24/7 (mp3quran.net has one Mustafa Ismail radio; no separate murattal/mujawwad radios exist there).",
+    "frequency": null,
+    "category": null,
+    "show": true
   }
 ]

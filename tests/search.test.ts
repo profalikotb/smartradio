@@ -54,15 +54,17 @@ describe("catalog search ranking", () => {
     ["اذاعة القران المصرية", QURAN_CAIRO_ID],
     ["قرأن", QURAN_CAIRO_ID],
     ["Qruan Cairo", QURAN_CAIRO_ID], // typo
-    ["Al Aghani", AL_AGHANI_ID],
-    ["Aghani Egypt", AL_AGHANI_ID],
-    ["إذاعة الأغاني", AL_AGHANI_ID],
-    ["الاغانى", AL_AGHANI_ID],
-    ["إذاعة الأغاني المصرية", AL_AGHANI_ID],
-    ["اغني", AL_AGHANI_ID], // typo
+    ["الحصري", "husary"],
+    ["الحصرى مجود", "husary-mojawwad"],
+    ["مصطفى اسماعيل", "mustafa-ismail"],
+    ["Minshawi", "minshawi"],
+    ["الشعراوى", "sharawy"],
+    ["ام كلثوم", "umm-kulthum"],
+    ["نجوم", "eg-nogoum"],
   ])("%s → %s", (q, id) => expect(top(q)).toBe(id));
 
-  it("partial names work", () => expect(top("صوت الع")).toBe("eg-sout-el-arab"));
+  it("partial names work", () => expect(top("الشعرا")).toBe("sharawy"));
+  it("stations hidden in Excel (Show = No) never appear", () => expect(runSearch("الأغاني", {}, s, []).map((r) => r.entry.key)).not.toContain(AL_AGHANI_ID));
 
   it("core catalog station outranks same-name directory look-alikes from other countries", () => {
     const iran = rec({ uuid: "11111111-1111-1111-1111-111111111111", name: "إذاعة القرآن الكريم", countrycode: "IR", country: "Iran" });

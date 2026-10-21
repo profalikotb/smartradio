@@ -8,31 +8,38 @@ const rec = (p: Partial<DirectoryStation>): DirectoryStation => ({
   uuid: "u", name: "", countrycode: "EG", country: "Egypt", language: "", tags: "", homepage: "", favicon: "", codec: "MP3", bitrate: 0,
   hls: false, url: "https://s/x", urlResolved: "https://s/x", lastcheckok: true, lastcheckoktime: "", votes: 0, clickcount: 0, ...p,
 });
+const ROWS = CHANNELS as ChannelRow[];
+// Al Aghani is hidden in the app (Show = No) but its row still exists; build it directly for rule tests.
+const AGHANI = stationFromRow(ROWS.find((r) => r.name.includes("الأغاني"))!);
 const row = (p: Partial<ChannelRow>): ChannelRow => ({
   no: null, name: "", nameEn: null, url: null, format: null, result: null, checkedOn: null, favourite: false, core: null, source: null, notes: null, frequency: null, category: null, ...p,
 });
 
 describe("catalog comes from the Excel list", () => {
-  it("one station per Excel row, in Excel order, Quran first and Al Aghani second", () => {
-    expect(CATALOG.map((c) => c.nameAr)).toEqual((CHANNELS as ChannelRow[]).map((r) => r.name));
+  it("one station per shown Excel row, in Excel order, Quran first; Show = No rows are hidden", () => {
+    expect(CATALOG.map((c) => c.nameAr)).toEqual(ROWS.filter((r) => r.show !== false).map((r) => r.name));
     expect(CATALOG[0]!.id).toBe(QURAN_CAIRO_ID);
-    expect(CATALOG[1]!.id).toBe(AL_AGHANI_ID);
+    for (const id of [AL_AGHANI_ID, "eg-general-program", "eg-sout-el-arab", "eg-middle-east", "eg-cultural"]) expect(catalogById.has(id), id).toBe(false);
   });
   it("every Excel link becomes the station's stream; no Dailymotion player anywhere", () => {
-    for (const r of CHANNELS as ChannelRow[]) {
+    for (const r of ROWS.filter((x) => x.show !== false)) {
       const c = CATALOG.find((x) => x.nameAr === r.name)!;
       expect(c.directStreams?.[0]?.url ?? null).toBe(r.url);
       expect(c.officialPlayer).toBeUndefined();
       expect(c.radioBrowserUuid).toBeUndefined();
     }
   });
+  it("new reciter radios have their own ids", () => {
+    for (const id of ["husary", "husary-mojawwad", "mustafa-ismail", "minshawi", "minshawi-mojawwad", "sharawy"]) expect(catalogById.has(id), id).toBe(true);
+    expect(catalogById.get("minshawi")!.directStreams!.map((d) => d.url)).toEqual(["https://backup.qurango.net/radio/mohammed_siddiq_alminshawi", "https://serverkw.quran-uni.com:8074/;*.mp3"]);
+  });
   it("known stations keep their stable ids (favorites survive link edits)", () => {
-    for (const id of ["eg-general-program", "eg-9090", "eg-nagham", "eg-mega", "eg-shaaby", "eg-nile-fm", "eg-sout-el-arab", "eg-middle-east", "eg-cultural", "eg-nogoum", "eg-radio-hits-882", "eg-on-sport"])
+    for (const id of ["eg-9090", "eg-nagham", "eg-mega", "eg-shaaby", "eg-nile-fm", "eg-nogoum", "eg-radio-hits-882", "eg-on-sport"])
       expect(catalogById.has(id), id).toBe(true);
   });
   it("‘verified’ only when the sheet says the link returned audio", () => {
     expect(catalogById.get(QURAN_CAIRO_ID)!.identity.status).toBe("catalog-verified");
-    expect(catalogById.get(AL_AGHANI_ID)!.identity.status).toBe("unverified");
+    expect(AGHANI.identity.status).toBe("unverified");
   });
   it("an unknown new row still works, with a stable id from its name", () => {
     const a = stationFromRow(row({ name: "إذاعة جديدة", url: "https://n.example/live" }));
@@ -48,7 +55,7 @@ describe("catalog comes from the Excel list", () => {
 
 describe("strict candidate rules (stations without a link)", () => {
   it("Al Aghani: Egypt + name; never another country's Aghani or a generic music stream", () => {
-    const aghani = catalogById.get(AL_AGHANI_ID)!;
+    const aghani = AGHANI;
     expect(isCandidate(aghani, rec({ name: "ERTU - اذاعه الاغاني" }))).toBe(true);
     expect(isCandidate(aghani, rec({ name: "Aghani Aghani", countrycode: "LB" }))).toBe(false);
     expect(isCandidate(aghani, rec({ name: "Arabic Hits" }))).toBe(false);
@@ -70,6 +77,18 @@ describe("added 21/10/2026: Al-Sha'rawi, Al-Minshawi, Umm Kulthum", () => {
     expect(isCandidate(uk, rec({ name: "Arabic Hits", countrycode: "MA" }))).toBe(false);
   });
   it("Egyptian stations stay Egypt-only", () => {
-    expect(isCandidate(catalogById.get(AL_AGHANI_ID)!, rec({ name: "Al Aghani", countrycode: "MA" }))).toBe(false);
+    expect(isCandidate(AGHANI, rec({ name: "Al Aghani", countrycode: "MA" }))).toBe(false);
+  });
+});
+
+describe("automatic listing choice for tribute stations", () => {
+  it("prefers healthy, then HTTPS, then popular listings", async () => {
+    const { rankListings } = await import("@/lib/stations");
+    const r = rankListings([
+      rec({ uuid: "dead", lastcheckok: false, url: "https://a/x", urlResolved: "https://a/x", votes: 999 }),
+      rec({ uuid: "http", lastcheckok: true, url: "http://b/x", urlResolved: "http://b/x", votes: 50 }),
+      rec({ uuid: "best", lastcheckok: true, url: "https://c/x", urlResolved: "https://c/x", votes: 10 }),
+    ]);
+    expect(r.map((x) => x.uuid)).toEqual(["best", "http", "dead"]);
   });
 });

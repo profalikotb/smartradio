@@ -56,6 +56,14 @@ export function streamsFromUrls(list: { url: string; codec?: string; bitrate?: n
   return [...secure, ...insecure];
 }
 
+/** Healthy, HTTPS, popular listings first. */
+export function rankListings(list: DirectoryStation[]): DirectoryStation[] {
+  const https = (d: DirectoryStation) => (d.urlResolved || d.url).startsWith("https:");
+  return [...list].sort(
+    (a, b) => Number(b.lastcheckok) - Number(a.lastcheckok) || Number(https(b)) - Number(https(a)) || (b.votes || 0) - (a.votes || 0) || (b.clickcount || 0) - (a.clickcount || 0),
+  );
+}
+
 export function streamsFrom(records: DirectoryStation[]): StreamRef[] {
   const secure: StreamRef[] = [];
   const insecure: StreamRef[] = [];
@@ -194,6 +202,31 @@ export async function resolveStation(id: string, signal?: AbortSignal): Promise<
     }
     const b = s.bindings[id];
     if (b) return { ok: true, station: bindingToPlayable(c, b), fromCache: false };
+    // Genre/tribute stations (e.g. Umm Kulthum) with no link: play the best matching directory
+    // listing automatically. Every listing passed the strict name rule on the server.
+    if (c.match?.anyCountry) {
+      try {
+        const found = await directory.candidates(id, signal);
+        if (!found.length) return fallbackOr(id, { ok: false, reason: "not-found" });
+        const ranked = rankListings(found);
+        const station: PlayableStation = {
+          id,
+          nameAr: c.nameAr,
+          nameEn: c.nameEn,
+          country: ranked[0]!.countrycode || "—",
+          category: c.category,
+          website: ranked[0]!.homepage || c.website,
+          logo: ranked[0]!.favicon || undefined,
+          identity: "unverified",
+          streams: streamsFrom(ranked.slice(0, 6)),
+        };
+        update((st) => ({ ...st, known: { ...st.known, [id]: station } }));
+        return { ok: true, station, fromCache: false };
+      } catch (e) {
+        if ((e as Error).name === "AbortError") throw e;
+        return fallbackOr(id, { ok: false, reason: "directory", detail: e instanceof DirectoryError ? e.kind : "error" });
+      }
+    }
     return { ok: false, reason: "unverified" };
   }
 

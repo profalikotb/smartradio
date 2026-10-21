@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { AL_AGHANI_ID, GENERAL_PROGRAM_ID, QURAN_CAIRO_ID } from "@/lib/catalog";
+import { AL_AGHANI_ID, QURAN_CAIRO_ID } from "@/lib/catalog";
+import { SEEDS } from "@/lib/state";
+const SEED2 = SEEDS[2]!.favorites; // Excel "Favourite = Yes" rows that are shown (none beyond Quran/Aghani right now)
 import { CURRENT_SEED, ImportError, addCustomStation, addRecent, applySeeds, deleteStation, emptyState, exportState, hydrate, importState, moveCore, moveFavorite, toggleCore, toggleFavorite, type AppState } from "@/lib/state";
 
 const reload = (s: AppState) => hydrate(JSON.stringify(s)); // simulates app restart / update
@@ -7,7 +9,7 @@ const reload = (s: AppState) => hydrate(JSON.stringify(s)); // simulates app res
 describe("one-time default seeding", () => {
   it("first run: Quran first, Al Aghani second (both pinned), then the Excel favourites", () => {
     const s = hydrate(null);
-    expect(s.favorites).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID, GENERAL_PROGRAM_ID]);
+    expect(s.favorites).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID, ...SEED2]);
     expect(s.pinned.slice(0, 2)).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID]);
     expect(s.seedVersion).toBe(CURRENT_SEED);
   });
@@ -15,14 +17,14 @@ describe("one-time default seeding", () => {
   it("a removed core station stays removed across reloads and updates", () => {
     let s = hydrate(null);
     s = toggleFavorite(s, AL_AGHANI_ID);
-    expect(reload(reload(s)).favorites).toEqual([QURAN_CAIRO_ID, GENERAL_PROGRAM_ID]);
+    expect(reload(reload(s)).favorites).toEqual([QURAN_CAIRO_ID, ...SEED2]);
   });
 
   it("user order is never re-sorted", () => {
     let s = hydrate(null);
     s = toggleFavorite(s, "rb:x");
-    for (let i = 0; i < 3; i++) s = moveFavorite(s, "rb:x", -1);
-    expect(reload(s).favorites).toEqual(["rb:x", QURAN_CAIRO_ID, AL_AGHANI_ID, GENERAL_PROGRAM_ID]);
+    for (let i = 0; i < 5; i++) s = moveFavorite(s, "rb:x", -1);
+    expect(reload(s).favorites).toEqual(["rb:x", QURAN_CAIRO_ID, AL_AGHANI_ID, ...SEED2]);
   });
 
   it("a future seed version appends only missing ids at the end", () => {
@@ -37,8 +39,8 @@ describe("one-time default seeding", () => {
   });
 
   it("corrupt storage never crashes", () => {
-    expect(hydrate("{not json").favorites).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID, GENERAL_PROGRAM_ID]);
-    expect(hydrate(JSON.stringify({ favorites: "oops", seedVersion: 1 })).favorites).toEqual([GENERAL_PROGRAM_ID]); // only the newer seed
+    expect(hydrate("{not json").favorites).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID, ...SEED2]);
+    expect(hydrate(JSON.stringify({ favorites: "oops", seedVersion: 1 })).favorites).toEqual([...SEED2]); // only the newer seed
   });
 
   it("recent list is unique and capped", () => {

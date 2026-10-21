@@ -34,6 +34,8 @@ export interface ChannelRow {
   notes: string | null;
   frequency: string | null;
   category: string | null;
+  /** false = hidden via the Excel "Show" column. Older JSON may lack it (= shown). */
+  show?: boolean;
 }
 
 interface Meta {
@@ -70,7 +72,10 @@ const KNOWN: { match: string[]; meta: Meta }[] = [
   { match: ["أون سبورت", "اون سبورت", "on sport"], meta: { id: "eg-on-sport", nameEn: "ON Sport FM", category: "sports", frequency: "93.7 FM", website: "https://onsportfm.com/", aliases: ["اون سبورت", "on sport fm", "onsport"] } },
   { match: ["ميكس", "mix fm"], meta: { id: "eg-mix-fm", nameEn: "Mix FM 87.8", category: "music", frequency: "87.8 FM", aliases: ["ميكس اف ام", "mix fm"] } },
   { match: ["الشعراوي", "الشعراوى", "sharawy", "shaarawy"], meta: { id: "sharawy", nameEn: "Sheikh Al-Sha'rawi Radio", category: "religious", aliases: ["الشعراوي", "اذاعة الشعراوي", "تفسير الشعراوي", "sharawy", "shaarawy", "shaarawi"] } },
-  { match: ["مجود", "mojawwad", "mujawwad"], meta: { id: "minshawi-mojawwad", nameEn: "Al-Minshawi Radio (Mujawwad)", category: "quran", aliases: ["المنشاوي مجود", "minshawi mujawwad"] } },
+  { match: ["الحصري مجود", "الحصرى مجود", "hussary mujawwad"], meta: { id: "husary-mojawwad", nameEn: "Al-Husary Radio (Mujawwad)", category: "quran", aliases: ["الحصري مجود", "husary mujawwad"] } },
+  { match: ["الحصري", "الحصرى", "hussary", "husary"], meta: { id: "husary", nameEn: "Al-Husary Radio", category: "quran", aliases: ["الحصري", "محمود خليل الحصري", "husary", "hussary", "hosary"] } },
+  { match: ["مصطفى إسماعيل", "مصطفى اسماعيل", "mustafa ismail"], meta: { id: "mustafa-ismail", nameEn: "Mustafa Ismail Radio", category: "quran", aliases: ["مصطفى اسماعيل", "mustafa ismail", "mostafa ismail"] } },
+  { match: ["المنشاوي مجود", "المنشاوى مجود", "minshawi mujawwad"], meta: { id: "minshawi-mojawwad", nameEn: "Al-Minshawi Radio (Mujawwad)", category: "quran", aliases: ["المنشاوي مجود", "minshawi mujawwad"] } },
   { match: ["المنشاوي", "المنشاوى", "minshawi"], meta: { id: "minshawi", nameEn: "Al-Minshawi Radio", category: "quran", aliases: ["المنشاوي", "محمد صديق المنشاوي", "minshawi", "menshawy"] } },
   { match: ["كلثوم", "kalthoum", "kolthoum", "kulthum"], meta: { id: "umm-kulthum", nameEn: "Umm Kulthum Radio", category: "music", anyCountry: true, matchNames: ["كلثوم", "kalthoum", "kolthoum", "kalthom", "kulthum", "koulthoum"], aliases: ["ام كلثوم", "كوكب الشرق", "umm kulthum", "oum kalthoum", "om kalthoum"] } },
   { match: ["الإسكندرية", "الاسكندرية"], meta: { id: "eg-alexandria", nameEn: "Alexandria Radio", category: "regional", aliases: ["اذاعة الاسكندرية", "alexandria radio"] } },
@@ -119,6 +124,7 @@ function build(rows: ChannelRow[]): CatalogStation[] {
   const seen = new Set<string>();
   const out: CatalogStation[] = [];
   for (const r of rows) {
+    if (r.show === false) continue;
     const s = stationFromRow(r);
     if (seen.has(s.id)) continue; // a duplicate row for the same station: first one wins
     seen.add(s.id);

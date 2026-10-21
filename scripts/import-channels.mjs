@@ -105,6 +105,7 @@ function convert(rows) {
     notes: col(/notes|ملاحظ/),
     frequency: col(/freq/),
     category: col(/categ|تصنيف/),
+    show: col(/^show|إظهار|اظهار/),
   };
   if (C.name < 0 || C.url < 0) throw new Error("Channel or Stream URL column missing");
   const get = (r, i) => (i >= 0 ? r[i] ?? null : null);
@@ -144,6 +145,8 @@ function convert(rows) {
       notes: get(r, C.notes) || null,
       frequency: get(r, C.frequency) ? String(get(r, C.frequency)) : null,
       category: get(r, C.category) || null,
+      // "Show" column: No hides the station in the app (row and link are kept). Blank = shown.
+      show: C.show >= 0 && get(r, C.show) != null && String(get(r, C.show)).trim() !== "" ? yes(get(r, C.show)) : true,
     });
   }
   return { out, warnings };
