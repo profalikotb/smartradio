@@ -74,6 +74,7 @@ const KNOWN: { match: string[]; meta: Meta }[] = [
   { match: ["الشعراوي", "الشعراوى", "sharawy", "shaarawy"], meta: { id: "sharawy", nameEn: "Sheikh Al-Sha'rawi Radio", category: "religious", aliases: ["الشعراوي", "اذاعة الشعراوي", "تفسير الشعراوي", "sharawy", "shaarawy", "shaarawi"] } },
   { match: ["الحصري مجود", "الحصرى مجود", "hussary mujawwad"], meta: { id: "husary-mojawwad", nameEn: "Al-Husary Radio (Mujawwad)", category: "quran", aliases: ["الحصري مجود", "husary mujawwad"] } },
   { match: ["الحصري", "الحصرى", "hussary", "husary"], meta: { id: "husary", nameEn: "Al-Husary Radio", category: "quran", aliases: ["الحصري", "محمود خليل الحصري", "husary", "hussary", "hosary"] } },
+  { match: ["مصطفى إسماعيل تسجيلات نادرة", "مصطفى اسماعيل تسجيلات نادرة", "مصطفى إسماعيل نادر", "تسجيلات نادرة", "mustafa ismail rare"], meta: { id: "mustafa-ismail-rare", nameEn: "Mustafa Ismail — Rare Recordings", category: "quran", aliases: ["مصطفى اسماعيل نادره", "تسجيلات نادره", "تلاوات نادره", "حفلات مصطفى اسماعيل", "mustafa ismail rare", "mustafa ismail concerts"] } },
   { match: ["مصطفى إسماعيل تجويد", "مصطفى اسماعيل تجويد", "مصطفى إسماعيل مجود", "مصطفى اسماعيل مجود", "mustafa ismail mujawwad"], meta: { id: "mustafa-ismail-mojawwad", nameEn: "Mustafa Ismail — Tajweed (Mujawwad)", category: "quran", aliases: ["مصطفى اسماعيل تجويد", "مصطفى اسماعيل مجود", "mustafa ismail mujawwad", "mustafa ismail tajweed"] } },
   { match: ["مصطفى إسماعيل", "مصطفى اسماعيل", "mustafa ismail"], meta: { id: "mustafa-ismail", nameEn: "Mustafa Ismail Radio", category: "quran", aliases: ["مصطفى اسماعيل", "mustafa ismail", "mostafa ismail"] } },
   { match: ["المنشاوي مجود", "المنشاوى مجود", "minshawi mujawwad"], meta: { id: "minshawi-mojawwad", nameEn: "Al-Minshawi Radio (Mujawwad)", category: "quran", aliases: ["المنشاوي مجود", "minshawi mujawwad"] } },
@@ -109,8 +110,9 @@ export function stationFromRow(row: ChannelRow): CatalogStation {
     frequency: row.frequency || m.frequency,
     website: m.website,
     core: CORE_IDS.includes(m.id as (typeof CORE_IDS)[number]),
+    archive: archiveOf(row),
     playlist: isPlaylist(row) ? { base: row.url!.replace(/\/?$/, "/"), count: 114 } : undefined,
-    directStreams: isPlaylist(row) ? undefined : row.url ? (row.urls?.length ? row.urls : [row.url]).map((url) => ({ url, codec: row.format ?? undefined })) : undefined,
+    directStreams: isPlaylist(row) || archiveOf(row) ? undefined : row.url ? (row.urls?.length ? row.urls : [row.url]).map((url) => ({ url, codec: row.format ?? undefined })) : undefined,
     match: { names: m.matchNames ?? m.aliases.slice(0, 2), anyCountry: m.anyCountry },
     favourite: row.favourite,
     identity: {
@@ -125,6 +127,17 @@ export function stationFromRow(row: ChannelRow): CatalogStation {
 /** Format column says "Playlist" (or قائمة/سور) and the link is a folder of 001.mp3…114.mp3 files. */
 function isPlaylist(row: ChannelRow): boolean {
   return !!row.url && /playlist|قائمة|سور/i.test(row.format ?? "");
+}
+
+/**
+ * Format "Archive" (or links to archive.org/details/…): plays every recording in those items.
+ * Shuffled like a radio; write "Archive ordered" / "بالترتيب" to keep the item's order.
+ */
+function archiveOf(row: ChannelRow): CatalogStation["archive"] {
+  const urls = row.urls?.length ? row.urls : row.url ? [row.url] : [];
+  const ids = urls.map((u) => /archive\.org\/(?:details|download)\/([A-Za-z0-9._-]+)/.exec(u)?.[1]).filter((x): x is string => !!x);
+  if (!ids.length || !(/archive|أرشيف|ارشيف/i.test(row.format ?? "") || ids.length === urls.length)) return undefined;
+  return { ids, shuffle: !/order|ترتيب/i.test(row.format ?? "") };
 }
 
 function build(rows: ChannelRow[]): CatalogStation[] {

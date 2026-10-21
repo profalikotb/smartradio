@@ -187,6 +187,8 @@ class Controller {
   }
 
   step(delta: 1 | -1) {
+    // On a recitation playlist, next/previous move between recordings instead of stations.
+    if (!this.st.pendingId && this.engine.skipTrack(delta)) return;
     const favs = getState().favorites;
     if (!favs.length) return;
     const cur = this.st.pendingId ?? this.engine.getSnapshot().station?.id;

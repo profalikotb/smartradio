@@ -57,6 +57,15 @@ export function streamsFromUrls(list: { url: string; codec?: string; bitrate?: n
   return [...secure, ...insecure];
 }
 
+function shuffle<T>(a: T[]): T[] {
+  const out = [...a];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
+}
+
 /** Healthy, HTTPS, popular listings first. */
 export function rankListings(list: DirectoryStation[]): DirectoryStation[] {
   const https = (d: DirectoryStation) => (d.urlResolved || d.url).startsWith("https:");
@@ -155,6 +164,28 @@ export async function resolveStation(id: string, signal?: AbortSignal): Promise<
 
   if (c) {
     const override = s.streamOverrides[id];
+    if (!override && c.archive) {
+      try {
+        const r = await fetch(`/api/archive?ids=${c.archive.ids.map(encodeURIComponent).join(",")}`, { signal, credentials: "same-origin" });
+        if (!r.ok) return { ok: false, reason: "directory", detail: "archive" };
+        const { tracks } = (await r.json()) as { tracks: { url: string; label: string }[] };
+        if (!tracks.length) return { ok: false, reason: "not-found" };
+        let streams: StreamRef[] = tracks.map((t) => ({ url: t.url, codec: "MP3", source: "playlist" as const, label: t.label }));
+        if (c.archive.shuffle) streams = shuffle(streams);
+        else {
+          const start = Math.floor(Math.random() * streams.length);
+          streams = [...streams.slice(start), ...streams.slice(0, start)];
+        }
+        return {
+          ok: true,
+          fromCache: false,
+          station: { id, nameAr: c.nameAr, nameEn: c.nameEn, country: "EG", category: c.category, website: c.website, identity: "unverified", playlist: true, streams },
+        };
+      } catch (e) {
+        if ((e as Error).name === "AbortError") throw e;
+        return { ok: false, reason: "directory", detail: "archive" };
+      }
+    }
     if (!override && c.playlist) {
       // Surah-by-surah recitation: start at a random surah (radio feel), then continue in order.
       const { base, count } = c.playlist;

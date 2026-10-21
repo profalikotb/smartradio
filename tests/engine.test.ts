@@ -348,3 +348,23 @@ describe("recitation playlist (surah files)", () => {
     expect(e.getSnapshot().status).toBe("unavailable");
   });
 });
+
+describe("playlist next/previous", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+  it("skipTrack moves between recordings (wrapping both ways); live stations are untouched", async () => {
+    const e = mk();
+    e.play({ ...st("pl", "https://x/a.mp3", "https://x/b.mp3", "https://x/c.mp3"), playlist: true });
+    await flush();
+    audio.emit("playing");
+    expect(e.skipTrack(-1)).toBe(true);
+    await flush();
+    expect(audio.loads.at(-1)).toBe("https://x/c.mp3");
+    expect(e.skipTrack(1)).toBe(true);
+    await flush();
+    expect(audio.loads.at(-1)).toBe("https://x/a.mp3");
+    const f = mk();
+    f.play(st("live", "https://x/live"));
+    expect(f.skipTrack(1)).toBe(false);
+  });
+});

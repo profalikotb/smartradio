@@ -24,7 +24,8 @@ describe("catalog comes from the Excel list", () => {
   it("every Excel link becomes the station's stream; no Dailymotion player anywhere", () => {
     for (const r of ROWS.filter((x) => x.show !== false)) {
       const c = CATALOG.find((x) => x.nameAr === r.name)!;
-      expect(c.directStreams?.[0]?.url ?? c.playlist?.base ?? null).toBe(r.url);
+      if (c.archive) expect(r.url).toContain(c.archive.ids[0]);
+      else expect(c.directStreams?.[0]?.url ?? c.playlist?.base ?? null).toBe(r.url);
       expect(c.officialPlayer).toBeUndefined();
       expect(c.radioBrowserUuid).toBeUndefined();
     }
@@ -99,5 +100,17 @@ describe("Mustafa Ismail tajweed: surah-by-surah playlist", () => {
     expect(c.playlist).toEqual({ base: "https://cdn.mp3quran.net/audio/mustafa-ismail/r2/", count: 114 });
     expect(c.directStreams).toBeUndefined();
     expect(catalogById.get("mustafa-ismail")!.directStreams![0]!.url).toBe("https://backup.qurango.net/radio/mustafa_ismail");
+  });
+});
+
+describe("Internet Archive stations (rare recordings)", () => {
+  it("Mustafa Ismail rare recordings: two archive items, shuffled", () => {
+    const c = catalogById.get("mustafa-ismail-rare")!;
+    expect(c.archive).toEqual({ ids: ["Torath_Mustafa_Ismaiil_By_ReDa_MoHamMeD", "way2sona_20160405_2121"], shuffle: true });
+    expect(c.directStreams).toBeUndefined();
+  });
+  it("'Archive ordered' keeps order; a normal link is not treated as an archive", () => {
+    expect(stationFromRow(row({ name: "x", url: "https://archive.org/details/abc_1", format: "Archive ordered" })).archive).toEqual({ ids: ["abc_1"], shuffle: false });
+    expect(stationFromRow(row({ name: "y", url: "https://s.example/live" })).archive).toBeUndefined();
   });
 });

@@ -416,5 +416,25 @@
     "frequency": null,
     "category": null,
     "show": true
+  },
+  {
+    "no": 27,
+    "name": "مصطفى إسماعيل تسجيلات نادرة",
+    "nameEn": null,
+    "url": "https://archive.org/details/Torath_Mustafa_Ismaiil_By_ReDa_MoHamMeD",
+    "urls": [
+      "https://archive.org/details/Torath_Mustafa_Ismaiil_By_ReDa_MoHamMeD",
+      "https://archive.org/details/way2sona_20160405_2121"
+    ],
+    "format": "Archive",
+    "result": "Internet Archive collections / not checked",
+    "checkedOn": "22/10/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://archive.org/details/Torath_Mustafa_Ismaiil_By_ReDa_MoHamMeD",
+    "notes": "Rare tajweed: concerts & external recordings (1191, uploaded by Reda Mohammed) + 50 rare high-quality recordings. Shuffled like a radio; Next on the lock screen skips to another recording. Format \"Archive ordered\" keeps the order. Add more archive.org/details links (one per line).",
+    "frequency": null,
+    "category": null,
+    "show": true
   }
 ]

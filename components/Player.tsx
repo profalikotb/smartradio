@@ -50,10 +50,14 @@ export function PlayButton({ size = "md" }: { size?: "md" | "lg" | "xl" }) {
 
 export function LiveBadge({ status }: { status: UiStatus }) {
   const t = useT();
+  const lang = useLang();
+  // Recitation playlists play recordings, not a live broadcast.
+  const recorded = usePlayer().station?.playlist;
   if (status !== "playing") return null;
+  const label = recorded ? (lang === "ar" ? "تلاوة" : "Recitation") : t.live;
   return (
-    <span className="live-badge" aria-label={t.live}>
-      <span className="live-dot" aria-hidden /> {t.live}
+    <span className="live-badge" aria-label={label}>
+      <span className="live-dot" aria-hidden /> {label}
     </span>
   );
 }

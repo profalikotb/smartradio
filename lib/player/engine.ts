@@ -454,12 +454,22 @@ export class PlayerEngine {
   }
 
   /** Playlist stations: next surah (wraps from the last to the first). */
-  private nextTrack(gen: number, error?: ErrorKind) {
+  /** Lock-screen / player next & previous on a recitation playlist: move between recordings. */
+  skipTrack(delta: 1 | -1): boolean {
+    if (!this.snap.station?.playlist || this.streams.length < 2) return false;
+    this.intentionalPause = false;
+    this.trackFails = 0;
+    this.nextTrack(this.gen, undefined, delta);
+    return true;
+  }
+
+  private nextTrack(gen: number, error?: ErrorKind, delta = 1) {
     if (gen !== this.gen || gen === this.unlockGen || this.intentionalPause || !this.streams.length) return;
     this.clearAttemptTimers();
     this.teardownSource();
     const nextGen = ++this.gen;
-    this.set({ streamIndex: (this.snap.streamIndex + 1) % this.streams.length, attempt: 0, error, status: "buffering" });
+    const n = this.streams.length;
+    this.set({ streamIndex: (this.snap.streamIndex + delta + n) % n, attempt: 0, error, status: "buffering" });
     void this.attempt(nextGen);
   }
 

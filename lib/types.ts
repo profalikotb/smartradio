@@ -50,6 +50,8 @@ export interface CatalogStation {
   officialPlayer?: { embedUrl?: string; pageUrl: string; provider: string };
   /** Recitation played surah by surah from a folder of files: <base>001.mp3 … <base>114.mp3. */
   playlist?: { base: string; count: number };
+  /** Internet Archive items whose original MP3s are played one after another (shuffled unless ordered). */
+  archive?: { ids: string[]; shuffle: boolean };
   /** "Favourite" column of the Excel list: added to favorites once, on first run after it appears. */
   favourite?: boolean;
   identity: {
