@@ -40,7 +40,7 @@ export interface CatalogStation {
   /** Broadcaster stream URLs verified by hand (not from the directory). */
   directStreams?: { url: string; codec?: string; bitrate?: number }[];
   /** Rules a directory record must satisfy to be offered as a candidate for this station. */
-  match?: { names: string[]; homepageHints?: string[] };
+  match?: { names: string[]; homepageHints?: string[]; anyCountry?: boolean };
   /**
    * Broadcaster's own embedded web player, offered as a fallback when no direct audio stream is
    * verified. Plays only while visible (no background/lock-screen playback).

@@ -55,3 +55,21 @@ describe("strict candidate rules (stations without a link)", () => {
     expect(isCandidate(aghani, rec({ name: "Nogoum FM" }))).toBe(false);
   });
 });
+
+describe("added 21/10/2026: Al-Sha'rawi, Al-Minshawi, Umm Kulthum", () => {
+  it("get their own ids; a multi-line cell gives fallback links", () => {
+    expect(catalogById.get("sharawy")!.directStreams!.map((d) => d.url)).toEqual(["https://serverkw.quran-uni.com:8202/;*.mp3", "https://server03.quran-uni.com:7148/;*.mp3"]);
+    expect(catalogById.get("minshawi")!.directStreams![0]!.url).toMatch(/alminshawi$/);
+    expect(catalogById.get("minshawi-mojawwad")!.directStreams![0]!.url).toMatch(/alminshawi_mojawwad$/);
+    expect(catalogById.get("umm-kulthum")!.directStreams).toBeUndefined();
+  });
+  it("Umm Kulthum finder accepts tribute stations from any country, but only Umm Kulthum ones", () => {
+    const uk = catalogById.get("umm-kulthum")!;
+    expect(isCandidate(uk, rec({ name: "Radio Oum Kalthoum", countrycode: "MA" }))).toBe(true);
+    expect(isCandidate(uk, rec({ name: "راديو ام كلثوم كوكب الشرق", countrycode: "AL" }))).toBe(true);
+    expect(isCandidate(uk, rec({ name: "Arabic Hits", countrycode: "MA" }))).toBe(false);
+  });
+  it("Egyptian stations stay Egypt-only", () => {
+    expect(isCandidate(catalogById.get(AL_AGHANI_ID)!, rec({ name: "Al Aghani", countrycode: "MA" }))).toBe(false);
+  });
+});

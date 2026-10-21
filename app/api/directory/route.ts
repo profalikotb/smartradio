@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * GET /api/directory?q=<text>&country=EG         → name search (merged Arabic variants)
  * GET /api/directory?uuids=<uuid,uuid>           → live records for known stations
  * GET /api/directory?prefixes=<8hex,8hex>        → Egyptian records whose UUID starts with a prefix
- * GET /api/directory?candidates=<catalogId>      → strict Egypt-only candidates for a catalog station
+ * GET /api/directory?candidates=<catalogId>      → strict candidates for a catalog station (Egypt only, unless the station allows any country)
  * Metadata only. Protected by middleware (session cookie).
  */
 export async function GET(req: NextRequest) {
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       if (!st?.match) return NextResponse.json({ error: "unknown-station" }, { status: 404 });
       const found = new Map<string, DirectoryStation>();
       const terms = [...st.match.names, st.nameAr, st.nameEn].slice(0, 6);
-      const settled = await Promise.allSettled(terms.map((t) => searchByName(t, { countrycode: "EG", limit: 30 })));
+      const settled = await Promise.allSettled(terms.map((t) => searchByName(t, { countrycode: st.match!.anyCountry ? undefined : "EG", limit: 30 })));
       if (!settled.some((r) => r.status === "fulfilled")) throw new DirectoryUnavailable("candidates");
       for (const r of settled) if (r.status === "fulfilled") for (const d of r.value) if (isCandidate(st, d)) found.set(d.uuid, d);
       stations = [...found.values()];

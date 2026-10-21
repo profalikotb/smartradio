@@ -4,6 +4,9 @@
     "name": "القرآن الكريم من القاهرة",
     "nameEn": null,
     "url": "https://stream.radiojar.com/8s5u5tpdtwzuv",
+    "urls": [
+      "https://stream.radiojar.com/8s5u5tpdtwzuv"
+    ],
     "format": "MP3",
     "result": "HTTP 200 / audio received",
     "checkedOn": "20/10/2026",
@@ -19,6 +22,9 @@
     "name": "إذاعة الأغاني",
     "nameEn": null,
     "url": "https://live.eu-north-1b.cf.dmcdn.net/sec2(2vOLEFb00kVncVEMXe0mtH3xKGeDzRoGH4lNoajr61SVVR-TIMmVZLS2FzpkaLyHbgrLdCwqwqvd5Mbb77nwJQJaPABSxlM0xY9PK33uebKetEjruZsxhHBf1xciNg8g8KwWsTq9rm2ozEI1yLUp6T1PntxedWr3dwWYnZ2OXZr01yPMeLhnaW3xlITEEsEO)/dm/3/x8n6dyz/s/live-aac-64.m3u8",
+    "urls": [
+      "https://live.eu-north-1b.cf.dmcdn.net/sec2(2vOLEFb00kVncVEMXe0mtH3xKGeDzRoGH4lNoajr61SVVR-TIMmVZLS2FzpkaLyHbgrLdCwqwqvd5Mbb77nwJQJaPABSxlM0xY9PK33uebKetEjruZsxhHBf1xciNg8g8KwWsTq9rm2ozEI1yLUp6T1PntxedWr3dwWYnZ2OXZr01yPMeLhnaW3xlITEEsEO)/dm/3/x8n6dyz/s/live-aac-64.m3u8"
+    ],
     "format": "HLS / AAC 64",
     "result": "User supplied / not checked",
     "checkedOn": null,
@@ -34,6 +40,9 @@
     "name": "البرنامج العام",
     "nameEn": null,
     "url": "https://live.eu-north-1b.cf.dmcdn.net/sec2(S1TAl4zTDQ32ZJ5EjX-nwNgy1ne9aL1D7OLOJ7XEI07BdyCM3B2ZvMTuVF3CfrZ6lu6JOAW_kog4NNsex5ZpycJMKYcsRufTYE9Z0HlyaZgxxm3l8ajwAdVi53Ji7Pe1Wtkgdka5vDKd24Zi5wyrgnmovwgQVorXqJLt_xYOZfarORH6C-E0R3wrakwT6x5t)/dm/3/x8n6dt3/s/live-aac-128.m3u8",
+    "urls": [
+      "https://live.eu-north-1b.cf.dmcdn.net/sec2(S1TAl4zTDQ32ZJ5EjX-nwNgy1ne9aL1D7OLOJ7XEI07BdyCM3B2ZvMTuVF3CfrZ6lu6JOAW_kog4NNsex5ZpycJMKYcsRufTYE9Z0HlyaZgxxm3l8ajwAdVi53Ji7Pe1Wtkgdka5vDKd24Zi5wyrgnmovwgQVorXqJLt_xYOZfarORH6C-E0R3wrakwT6x5t)/dm/3/x8n6dt3/s/live-aac-128.m3u8"
+    ],
     "format": "HLS / AAC 128",
     "result": "User supplied / not checked",
     "checkedOn": null,
@@ -49,6 +58,9 @@
     "name": "الراديو 9090",
     "nameEn": null,
     "url": "https://9090streaming.mobtada.com/9090FMEGYPT",
+    "urls": [
+      "https://9090streaming.mobtada.com/9090FMEGYPT"
+    ],
     "format": "MP3",
     "result": "HTTP 200 / audio received",
     "checkedOn": "20/10/2026",
@@ -64,6 +76,9 @@
     "name": "نغم إف إم",
     "nameEn": null,
     "url": "https://ahmsamir.radioca.st/stream/1/",
+    "urls": [
+      "https://ahmsamir.radioca.st/stream/1/"
+    ],
     "format": "MP3",
     "result": "HTTP 200 / audio received",
     "checkedOn": "20/10/2026",
@@ -79,6 +94,9 @@
     "name": "ميجا إف إم",
     "nameEn": null,
     "url": "https://megafm927.radioca.st/stream/1/",
+    "urls": [
+      "https://megafm927.radioca.st/stream/1/"
+    ],
     "format": "MP3",
     "result": "HTTP 200 / audio received",
     "checkedOn": "20/10/2026",
@@ -94,6 +112,9 @@
     "name": "شعبي إف إم",
     "nameEn": null,
     "url": "https://radio95.radioca.st/stream/1/",
+    "urls": [
+      "https://radio95.radioca.st/stream/1/"
+    ],
     "format": "MP3",
     "result": "HTTP 200 / audio received",
     "checkedOn": "20/10/2026",
@@ -109,6 +130,9 @@
     "name": "نايل إف إم",
     "nameEn": null,
     "url": "https://audio.nrpstream.com/listen/nile_fm/radio.mp3",
+    "urls": [
+      "https://audio.nrpstream.com/listen/nile_fm/radio.mp3"
+    ],
     "format": "MP3",
     "result": "HTTP 200 / audio received",
     "checkedOn": "20/10/2026",
@@ -124,6 +148,9 @@
     "name": "صوت العرب",
     "nameEn": null,
     "url": "https://live.eu-north-1a.cf.dmcdn.net/sec2(NHjpCJkr_-xJqNlz0gTQMfwd_jGMQnfUcI8NiQ8-AgMeh_IlihErRW1lsqgPheApKTs6XwIFvoKrYaL-_IdwvWnLUwgi0L8ER3x54_3mk79Yf6aF3m4zzacU86IpLwto19-jHXQ0-DQ0jpFS9XwxWMSQrlqRkvd2YCEIf1HJjobhrW4Cg1ZfrHt33fJSNWJq)/dm/4/x8n6dqq/live-aac-64.m3u8",
+    "urls": [
+      "https://live.eu-north-1a.cf.dmcdn.net/sec2(NHjpCJkr_-xJqNlz0gTQMfwd_jGMQnfUcI8NiQ8-AgMeh_IlihErRW1lsqgPheApKTs6XwIFvoKrYaL-_IdwvWnLUwgi0L8ER3x54_3mk79Yf6aF3m4zzacU86IpLwto19-jHXQ0-DQ0jpFS9XwxWMSQrlqRkvd2YCEIf1HJjobhrW4Cg1ZfrHt33fJSNWJq)/dm/4/x8n6dqq/live-aac-64.m3u8"
+    ],
     "format": null,
     "result": "No verified direct URL found",
     "checkedOn": "21/10/2026",
@@ -139,6 +166,9 @@
     "name": "الشرق الأوسط",
     "nameEn": null,
     "url": "https://live.eu-north-1b.cf.dmcdn.net/sec2(7NdJF78ORgpMRECqdwLnllfxs3iMQD8NQEqTlrkzqCRWRM4uoNkNZJp2vOKoVsB5xY2PxLXvz8CHu0xKQ7IgO-aMO7XAdElSIQiVqpiRfVpMtFNUxanreAFr1gGRqpsjmnLZQy-zRTa-MDoYxMTgVxSgRejxAAHuf_W4M9mw3_yGazrLg5lkxhjgdi28tWeT)/dm/3/x8n6drt/s/live-aac-128.m3u8",
+    "urls": [
+      "https://live.eu-north-1b.cf.dmcdn.net/sec2(7NdJF78ORgpMRECqdwLnllfxs3iMQD8NQEqTlrkzqCRWRM4uoNkNZJp2vOKoVsB5xY2PxLXvz8CHu0xKQ7IgO-aMO7XAdElSIQiVqpiRfVpMtFNUxanreAFr1gGRqpsjmnLZQy-zRTa-MDoYxMTgVxSgRejxAAHuf_W4M9mw3_yGazrLg5lkxhjgdi28tWeT)/dm/3/x8n6drt/s/live-aac-128.m3u8"
+    ],
     "format": null,
     "result": "No verified direct URL found",
     "checkedOn": "21/10/2026",
@@ -154,6 +184,9 @@
     "name": "البرنامج الثقافي",
     "nameEn": null,
     "url": "https://live.eu-north-1b.cf.dmcdn.net/sec2(oHQig1WNYTFmiGpQUxzB7pwBgjEN1Eq3QfGGEbf1PzbF4dOt6zk38MhD6RMr4GnOLX5qmYyMssB21qLHJdn4tpwKmyD8Iy_hWL6EfA1tJ3eMDMVUGxeKpvjQ3E_RwgzrLPZqhZXrhn0ZzKhMfL1f83Eqe1k49rHE0KrNfkc6RWln2RYT7iSbdKhppU_H39mb)/dm/3/x8n6eci/s/live-aac-128.m3u8",
+    "urls": [
+      "https://live.eu-north-1b.cf.dmcdn.net/sec2(oHQig1WNYTFmiGpQUxzB7pwBgjEN1Eq3QfGGEbf1PzbF4dOt6zk38MhD6RMr4GnOLX5qmYyMssB21qLHJdn4tpwKmyD8Iy_hWL6EfA1tJ3eMDMVUGxeKpvjQ3E_RwgzrLPZqhZXrhn0ZzKhMfL1f83Eqe1k49rHE0KrNfkc6RWln2RYT7iSbdKhppU_H39mb)/dm/3/x8n6eci/s/live-aac-128.m3u8"
+    ],
     "format": null,
     "result": "No verified direct URL found",
     "checkedOn": "21/10/2026",
@@ -169,6 +202,9 @@
     "name": "نجوم إف إم",
     "nameEn": null,
     "url": "https://audio.nrpstream.com/listen/nogoumfm/radio.mp3",
+    "urls": [
+      "https://audio.nrpstream.com/listen/nogoumfm/radio.mp3"
+    ],
     "format": "MP3",
     "result": "HTTP 200 / audio received",
     "checkedOn": "21/10/2026",
@@ -184,6 +220,9 @@
     "name": "راديو هيتس",
     "nameEn": null,
     "url": "https://radiohits882.radioca.st/;",
+    "urls": [
+      "https://radiohits882.radioca.st/;"
+    ],
     "format": "MP3",
     "result": "HTTP 200 / audio received",
     "checkedOn": "21/10/2026",
@@ -199,6 +238,9 @@
     "name": "أون سبورت إف إم",
     "nameEn": null,
     "url": "https://carina.streamerr.co:2020/stream/OnSportFM",
+    "urls": [
+      "https://carina.streamerr.co:2020/stream/OnSportFM"
+    ],
     "format": "MP3",
     "result": "HTTP 200 / audio received",
     "checkedOn": "21/10/2026",
@@ -206,6 +248,77 @@
     "core": null,
     "source": "https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/EG",
     "notes": "Directory attribution; audio received. Station identity not confirmed by listening.",
+    "frequency": null,
+    "category": null
+  },
+  {
+    "no": 19,
+    "name": "إذاعة الشعراوي",
+    "nameEn": null,
+    "url": "https://serverkw.quran-uni.com:8202/;*.mp3",
+    "urls": [
+      "https://serverkw.quran-uni.com:8202/;*.mp3",
+      "https://server03.quran-uni.com:7148/;*.mp3"
+    ],
+    "format": "MP3",
+    "result": "Published on source pages / not checked",
+    "checkedOn": "21/10/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://quran-uni.com/radio/",
+    "notes": "Sheikh Al-Sha'rawi tafsir radio (quran-uni.com). Second line = backup server listed on e-quran.com/pages/radio/imam-al-sharawi.html.",
+    "frequency": null,
+    "category": null
+  },
+  {
+    "no": 20,
+    "name": "إذاعة المنشاوي",
+    "nameEn": null,
+    "url": "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi",
+    "urls": [
+      "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi"
+    ],
+    "format": "MP3",
+    "result": "Listed in mp3quran.net radio API / not checked",
+    "checkedOn": "21/10/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://mp3quran.net/api/v3/radios?language=ar",
+    "notes": "Mohamed Siddiq Al-Minshawi — murattal, 24/7 (mp3quran.net).",
+    "frequency": null,
+    "category": null
+  },
+  {
+    "no": 21,
+    "name": "إذاعة المنشاوي مجود",
+    "nameEn": null,
+    "url": "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi_mojawwad",
+    "urls": [
+      "https://backup.qurango.net/radio/mohammed_siddiq_alminshawi_mojawwad"
+    ],
+    "format": "MP3",
+    "result": "Listed in mp3quran.net radio API / not checked",
+    "checkedOn": "21/10/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://mp3quran.net/api/v3/radios?language=ar",
+    "notes": "Mohamed Siddiq Al-Minshawi — mujawwad, 24/7 (mp3quran.net).",
+    "frequency": null,
+    "category": null
+  },
+  {
+    "no": 22,
+    "name": "إذاعة أم كلثوم",
+    "nameEn": null,
+    "url": null,
+    "urls": [],
+    "format": null,
+    "result": "No verified direct URL found",
+    "checkedOn": "21/10/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://radio.garden/listen/radio-oum-kalthoum/QNKcRjYa",
+    "notes": "Tribute stations exist (Morocco: oumkalthoumradio.ma; Zeno.FM) but no stream URL could be verified. In the app: station page → find stream (searches all countries). Paste a URL here when you have one.",
     "frequency": null,
     "category": null
   }

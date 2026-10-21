@@ -8,7 +8,7 @@ import { hostOf } from "./search/rank";
  * the record's homepage host must match one. Candidates are only ever *offered* — the user confirms.
  */
 export function isCandidate(station: CatalogStation, d: DirectoryStation): boolean {
-  if (d.countrycode !== "EG" || !station.match) return false;
+  if (!station.match || (!station.match.anyCountry && d.countrycode !== "EG")) return false;
   const name = normalize(d.name);
   const nameOk = station.match.names.some((p) => name.includes(normalize(p)));
   if (!nameOk) return false;

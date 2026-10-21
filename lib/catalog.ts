@@ -23,6 +23,8 @@ export interface ChannelRow {
   name: string;
   nameEn: string | null;
   url: string | null;
+  /** All links in the cell (first = url); older JSON may lack it. */
+  urls?: string[];
   format: string | null;
   result: string | null;
   checkedOn: string | null;
@@ -36,6 +38,9 @@ export interface ChannelRow {
 
 interface Meta {
   id: string;
+  /** Tribute/online stations not based in Egypt: the in-app stream finder searches every country. */
+  anyCountry?: boolean;
+  matchNames?: string[];
   nameEn: string;
   category: Category;
   frequency?: string;
@@ -64,6 +69,10 @@ const KNOWN: { match: string[]; meta: Meta }[] = [
   { match: ["هيتس", "hits"], meta: { id: "eg-radio-hits-882", nameEn: "Radio Hits 88.2", category: "music", frequency: "88.2 FM", website: "https://radiohits882.com/", aliases: ["راديو هيتس", "radio hits"] } },
   { match: ["أون سبورت", "اون سبورت", "on sport"], meta: { id: "eg-on-sport", nameEn: "ON Sport FM", category: "sports", frequency: "93.7 FM", website: "https://onsportfm.com/", aliases: ["اون سبورت", "on sport fm", "onsport"] } },
   { match: ["ميكس", "mix fm"], meta: { id: "eg-mix-fm", nameEn: "Mix FM 87.8", category: "music", frequency: "87.8 FM", aliases: ["ميكس اف ام", "mix fm"] } },
+  { match: ["الشعراوي", "الشعراوى", "sharawy", "shaarawy"], meta: { id: "sharawy", nameEn: "Sheikh Al-Sha'rawi Radio", category: "religious", aliases: ["الشعراوي", "اذاعة الشعراوي", "تفسير الشعراوي", "sharawy", "shaarawy", "shaarawi"] } },
+  { match: ["مجود", "mojawwad", "mujawwad"], meta: { id: "minshawi-mojawwad", nameEn: "Al-Minshawi Radio (Mujawwad)", category: "quran", aliases: ["المنشاوي مجود", "minshawi mujawwad"] } },
+  { match: ["المنشاوي", "المنشاوى", "minshawi"], meta: { id: "minshawi", nameEn: "Al-Minshawi Radio", category: "quran", aliases: ["المنشاوي", "محمد صديق المنشاوي", "minshawi", "menshawy"] } },
+  { match: ["كلثوم", "kalthoum", "kolthoum", "kulthum"], meta: { id: "umm-kulthum", nameEn: "Umm Kulthum Radio", category: "music", anyCountry: true, matchNames: ["كلثوم", "kalthoum", "kolthoum", "kalthom", "kulthum", "koulthoum"], aliases: ["ام كلثوم", "كوكب الشرق", "umm kulthum", "oum kalthoum", "om kalthoum"] } },
   { match: ["الإسكندرية", "الاسكندرية"], meta: { id: "eg-alexandria", nameEn: "Alexandria Radio", category: "regional", aliases: ["اذاعة الاسكندرية", "alexandria radio"] } },
 ];
 
@@ -94,8 +103,8 @@ export function stationFromRow(row: ChannelRow): CatalogStation {
     frequency: row.frequency || m.frequency,
     website: m.website,
     core: CORE_IDS.includes(m.id as (typeof CORE_IDS)[number]),
-    directStreams: row.url ? [{ url: row.url, codec: row.format ?? undefined }] : undefined,
-    match: { names: m.aliases.slice(0, 2) },
+    directStreams: row.url ? (row.urls?.length ? row.urls : [row.url]).map((url) => ({ url, codec: row.format ?? undefined })) : undefined,
+    match: { names: m.matchNames ?? m.aliases.slice(0, 2), anyCountry: m.anyCountry },
     favourite: row.favourite,
     identity: {
       status: checkedOk ? "catalog-verified" : "unverified",

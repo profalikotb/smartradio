@@ -6,6 +6,7 @@ import { StreamLinkEditor } from "@/components/StreamLinkEditor";
 import { isActive, LiveBadge, statusLabel } from "@/components/Player";
 import { directory, DirectoryError } from "@/lib/directoryClient";
 import { player } from "@/lib/player/controller";
+import { catalogById } from "@/lib/catalog";
 import { dedupe, hostOf } from "@/lib/search/rank";
 import { confirmBinding, displayName, playableFromDirectory, rememberDirectoryStation, removeBinding, viewOf } from "@/lib/stations";
 import { useAppState, update } from "@/lib/store";
@@ -78,6 +79,8 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
 
       {c && <StreamLinkEditor id={id} failed={!!(current && ui && (ui.status === "unavailable" || ui.status === "resolve-failed"))} />}
 
+      {c && c.identity.status === "unverified" && !hasStream(id) && <Candidates catalogId={c.id} />}
+
       <details className="tech">
         <summary>{lang === "ar" ? "تفاصيل تقنية" : "Technical details"}</summary>
       <section className="panel">
@@ -149,7 +152,6 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
         )}
       </section>
 
-      {c && c.identity.status === "unverified" && !hasStream(id) && <Candidates catalogId={c.id} />}
 
       {c && (
         <section className="panel">
@@ -174,6 +176,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
 
 function Candidates({ catalogId }: { catalogId: string }) {
   const t = useT();
+  const lang = useLang();
   const [state, setState] = useState<"idle" | "loading" | "done" | DirectoryError["kind"]>("idle");
   const [groups, setGroups] = useState<DirectoryStation[][]>([]);
   const bound = useAppState((s) => s.bindings[catalogId]);
@@ -193,7 +196,7 @@ function Candidates({ catalogId }: { catalogId: string }) {
 
   return (
     <section className="panel">
-      <h2 className="section-title">{t.candidatesTitle}</h2>
+      <h2 className="section-title">{catalogById.get(catalogId)?.match?.anyCountry ? (lang === "ar" ? "مرشحون من الدليل (كل الدول)" : "Directory candidates (all countries)") : t.candidatesTitle}</h2>
       <p className="hint">{t.candidatesNote}</p>
       <button className="btn" onClick={find} disabled={state === "loading"}>
         <Icon name="search" size={16} /> {state === "loading" ? t.searching : t.findStream}

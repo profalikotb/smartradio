@@ -114,23 +114,27 @@ function convert(rows) {
   for (const r of rows.slice(hi + 1)) {
     const name = get(r, C.name);
     if (!name || typeof name !== "string") continue;
-    let url = get(r, C.url);
-    url = typeof url === "string" ? url.trim() : null;
-    if (url) {
+    // Column C may hold several links (one per line): the first is played, the others are fallbacks.
+    const cell = get(r, C.url);
+    const urls = [];
+    for (const part of typeof cell === "string" ? cell.split(/\s+/) : []) {
+      if (!part) continue;
       try {
-        const u = new URL(url);
+        const u = new URL(part);
         if (u.protocol !== "https:" && u.protocol !== "http:") throw new Error();
+        urls.push(part);
       } catch {
-        warnings.push(`row "${name}": invalid URL ignored`);
-        url = null;
+        warnings.push(`row "${name}": invalid URL ignored (${part.slice(0, 60)})`);
       }
     }
+    const url = urls[0] ?? null;
     const checked = get(r, C.checkedOn);
     out.push({
       no: typeof get(r, C.no) === "number" ? get(r, C.no) : null,
       name: name.trim(),
       nameEn: get(r, C.nameEn) || null,
       url,
+      urls,
       format: get(r, C.format) || null,
       result: get(r, C.result) || null,
       checkedOn: typeof checked === "number" ? serialToDate(checked) : checked || null,
