@@ -5,6 +5,7 @@
   "description": "Prof Ali Kotb Smart Radio — private bilingual (AR/EN) live radio PWA",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/import-channels.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

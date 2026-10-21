@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { AL_AGHANI_ID, QURAN_CAIRO_ID } from "@/lib/catalog";
+import { AL_AGHANI_ID, GENERAL_PROGRAM_ID, QURAN_CAIRO_ID } from "@/lib/catalog";
 import { CURRENT_SEED, ImportError, addCustomStation, addRecent, applySeeds, deleteStation, emptyState, exportState, hydrate, importState, moveCore, moveFavorite, toggleCore, toggleFavorite, type AppState } from "@/lib/state";
 
 const reload = (s: AppState) => hydrate(JSON.stringify(s)); // simulates app restart / update
 
 describe("one-time default seeding", () => {
-  it("first run: Quran first, Al Aghani second, both pinned", () => {
+  it("first run: Quran first, Al Aghani second (both pinned), then the Excel favourites", () => {
     const s = hydrate(null);
-    expect(s.favorites).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID]);
+    expect(s.favorites).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID, GENERAL_PROGRAM_ID]);
     expect(s.pinned.slice(0, 2)).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID]);
     expect(s.seedVersion).toBe(CURRENT_SEED);
   });
@@ -15,20 +15,18 @@ describe("one-time default seeding", () => {
   it("a removed core station stays removed across reloads and updates", () => {
     let s = hydrate(null);
     s = toggleFavorite(s, AL_AGHANI_ID);
-    expect(reload(reload(s)).favorites).toEqual([QURAN_CAIRO_ID]);
+    expect(reload(reload(s)).favorites).toEqual([QURAN_CAIRO_ID, GENERAL_PROGRAM_ID]);
   });
 
   it("user order is never re-sorted", () => {
     let s = hydrate(null);
     s = toggleFavorite(s, "rb:x");
-    s = moveFavorite(s, "rb:x", -1);
-    s = moveFavorite(s, "rb:x", -1);
-    expect(reload(s).favorites).toEqual(["rb:x", QURAN_CAIRO_ID, AL_AGHANI_ID]);
+    for (let i = 0; i < 3; i++) s = moveFavorite(s, "rb:x", -1);
+    expect(reload(s).favorites).toEqual(["rb:x", QURAN_CAIRO_ID, AL_AGHANI_ID, GENERAL_PROGRAM_ID]);
   });
 
   it("a future seed version appends only missing ids at the end", () => {
-    let s = hydrate(null);
-    s = toggleFavorite(s, QURAN_CAIRO_ID); // user removed Quran
+    const s: AppState = { ...emptyState(), seedVersion: 1, favorites: [AL_AGHANI_ID] }; // user removed Quran after seed 1
     const seeds = {
       1: { favorites: [QURAN_CAIRO_ID, AL_AGHANI_ID], pinned: [], groups: [] },
       2: { favorites: [AL_AGHANI_ID, "eg-new"], pinned: [], groups: [] },
@@ -39,8 +37,8 @@ describe("one-time default seeding", () => {
   });
 
   it("corrupt storage never crashes", () => {
-    expect(hydrate("{not json").favorites).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID]);
-    expect(hydrate(JSON.stringify({ favorites: "oops", seedVersion: 1 })).favorites).toEqual([]);
+    expect(hydrate("{not json").favorites).toEqual([QURAN_CAIRO_ID, AL_AGHANI_ID, GENERAL_PROGRAM_ID]);
+    expect(hydrate(JSON.stringify({ favorites: "oops", seedVersion: 1 })).favorites).toEqual([GENERAL_PROGRAM_ID]); // only the newer seed
   });
 
   it("recent list is unique and capped", () => {
@@ -149,5 +147,17 @@ describe("editable core stations", () => {
     const s = addCustomStation(emptyState(), "X", "https://x.example/live", "abc", true);
     expect(s.core.at(-1)).toBe("custom:abc");
     expect(importState(emptyState(), exportState(s)).core).toEqual(s.core);
+  });
+});
+
+describe("stream link replaced on this device", () => {
+  it("sets, survives reload and export/import, and resets", async () => {
+    const { setStreamOverride } = await import("@/lib/state");
+    let s = setStreamOverride(hydrate(null), AL_AGHANI_ID, " https://fresh.example/live.m3u8 ");
+    expect(s.streamOverrides[AL_AGHANI_ID]).toBe("https://fresh.example/live.m3u8");
+    expect(hydrate(JSON.stringify(s)).streamOverrides[AL_AGHANI_ID]).toBe("https://fresh.example/live.m3u8");
+    expect(importState(emptyState(), exportState(s)).streamOverrides[AL_AGHANI_ID]).toBe("https://fresh.example/live.m3u8");
+    s = setStreamOverride(s, AL_AGHANI_ID, "");
+    expect(s.streamOverrides).toEqual({});
   });
 });

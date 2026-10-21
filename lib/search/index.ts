@@ -43,10 +43,20 @@ export function catalogEntries(s: Pick<AppState, "bindings" | "playback" | "cust
  */
 const MAX_DIRECTORY = 20;
 
+/** Same stream regardless of http/https, letter case of the host, or a trailing "/" or ";". */
+export function streamKey(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.hostname.toLowerCase()}${u.port && u.port !== "80" && u.port !== "443" ? ":" + u.port : ""}${u.pathname.replace(/[/;]+$/, "")}`;
+  } catch {
+    return url;
+  }
+}
+
 export function runSearch(
   raw: string,
   filters: Filters,
-  s: Pick<AppState, "bindings" | "playback" | "custom" | "nicknames">,
+  s: Pick<AppState, "bindings" | "playback" | "custom" | "nicknames"> & Partial<Pick<AppState, "streamOverrides">>,
   directoryList: DirectoryStation[],
   now = Date.now(),
 ): SearchResult[] {
@@ -59,7 +69,12 @@ export function runSearch(
     for (const p of c.rbUuidPrefixes ?? []) ownPrefixes.push(p.toLowerCase());
   }
   for (const b of Object.values(s.bindings)) ownUuids.add(b.rbUuid);
-  const isOwn = (uuid: string) => ownUuids.has(uuid) || ownPrefixes.some((p) => uuid.toLowerCase().startsWith(p));
+  // Directory listings that use the same stream as an Excel station are that station: fold them.
+  const ownStreams = new Set<string>();
+  for (const c of CATALOG) for (const d of c.directStreams ?? []) ownStreams.add(streamKey(d.url));
+  for (const u of Object.values(s.streamOverrides ?? {})) ownStreams.add(streamKey(u));
+  const isOwnRec = (d: DirectoryStation) =>
+    ownUuids.has(d.uuid) || ownPrefixes.some((p) => d.uuid.toLowerCase().startsWith(p)) || ownStreams.has(streamKey(d.urlResolved || d.url));
 
   const results: SearchResult[] = [];
   for (const e of catalogEntries(s)) {
@@ -68,7 +83,7 @@ export function runSearch(
     if (score > 0) results.push({ entry: e, score });
   }
 
-  const groups = dedupe(directoryList.filter((d) => !isOwn(d.uuid) && (d.urlResolved || d.url)));
+  const groups = dedupe(directoryList.filter((d) => !isOwnRec(d) && (d.urlResolved || d.url)));
   const dirResults: SearchResult[] = [];
   for (const g of groups) {
     const d = g[0]!;

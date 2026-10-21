@@ -3,13 +3,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "./Icon";
 import { player } from "@/lib/player/controller";
-import { useAppState, update } from "@/lib/store";
+import { getState, useAppState, update } from "@/lib/store";
+import { catalogById } from "@/lib/catalog";
 import { displayName, viewOf, type StationView } from "@/lib/stations";
 import { deleteStation, moveCore, toggleCore, togglePin, toggleFavorite } from "@/lib/state";
 import { useLang, useT } from "@/lib/ui";
 import { isActive, LiveBadge, statusLabel, useUiStatus } from "./Player";
 import { fmt, fmtDateTime } from "@/lib/i18n";
-import { hasEmbed, openEmbed } from "./OfficialPlayer";
 import type { Category } from "@/lib/types";
 
 const CAT_ICON: Record<Category, string> = {
@@ -41,6 +41,11 @@ export function Logo({ id, size = 48 }: { id?: string; size?: number }) {
       {v && (v.category === "quran" || v.category === "music") ? <Icon name={CAT_ICON[v.category]} size={Math.round(size * 0.46)} /> : <span style={{ fontSize: size * 0.42 }}>{letter}</span>}
     </span>
   );
+}
+
+/** Has a stream link (from the Excel list, or replaced on this device). */
+export function hasStream(id: string): boolean {
+  return !!(catalogById.get(id)?.directStreams?.length || getState().streamOverrides[id]);
 }
 
 export function IdentityBadge({ v }: { v: Pick<StationView, "identity"> }) {
@@ -76,13 +81,12 @@ export function CoreButton({ id, editing = false }: { id: string; editing?: bool
   const pos = core.indexOf(id);
   const active = current && ui && isActive(ui.status);
   const failed = current && ui && (ui.status === "unavailable" || ui.status === "resolve-failed");
-  const embed = v.identity === "unverified" && hasEmbed(id);
-  const unverifiedNoStream = v.identity === "unverified" && !embed;
+  const unverifiedNoStream = v.identity === "unverified" && !hasStream(id);
   return (
     <div className={`core-card cat-${v.category} ${active ? "is-active" : ""} ${failed ? "is-failed" : ""}`}>
       <button
         className="core-main"
-        onClick={() => (embed ? openEmbed(id) : active ? player().stop() : player().playById(id))}
+        onClick={() => (active ? player().stop() : player().playById(id))}
         aria-label={`${active ? t.stop : t.play}: ${displayName(v, lang, nick)}`}
       >
         <Logo id={id} size={56} />
@@ -95,8 +99,6 @@ export function CoreButton({ id, editing = false }: { id: string; editing?: bool
               </>
             ) : unverifiedNoStream ? (
               t.unverified
-            ) : embed ? (
-              <bdi dir="ltr">{v.frequency ?? t.categories[v.category]}</bdi>
             ) : (
               <bdi dir="ltr">{v.frequency ?? t.categories[v.category]}</bdi>
             )}
@@ -133,7 +135,7 @@ export function CoreButton({ id, editing = false }: { id: string; editing?: bool
           </button>
         </div>
       )}
-      {!editing && !embed && (failed || (!current && info?.lastError && !info.lastOkAt) || unverifiedNoStream) && (
+      {!editing && (failed || (!current && info?.lastError && !info.lastOkAt) || unverifiedNoStream) && (
         <div className="core-foot">
           <span className="muted small">
             {current && ui?.message ? ui.message : unverifiedNoStream ? t.resolve.unverified : info?.lastErrorAt ? `${t.status.unavailable} · ${fmtDateTime(info.lastErrorAt, lang)}` : ""}
@@ -165,11 +167,8 @@ export function StationRow({ id, view, extra, onPlay, onRemember }: { id: string
   const { current, ui } = useStationStatus(id);
   if (!v || hidden) return null;
   const active = current && ui && isActive(ui.status);
-  // Stations published only as the broadcaster's live player play in the in-app player window.
-  const embed = v.identity === "unverified" && hasEmbed(id);
   const onMain = () => {
     if (onPlay) return onPlay();
-    if (embed) return openEmbed(id);
     return active ? player().stop() : player().playById(id);
   };
   return (
@@ -185,7 +184,7 @@ export function StationRow({ id, view, extra, onPlay, onRemember }: { id: string
               </>
             ) : (
               <>
-                {!embed && <IdentityBadge v={v} />}{" "}
+                {!(v.identity === "unverified" && hasStream(id)) && <IdentityBadge v={v} />}{" "}
                 <span className="muted">{t.categories[v.category]}</span>
               </>
             )}

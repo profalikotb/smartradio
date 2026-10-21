@@ -1,51 +1,57 @@
 import { describe, expect, it } from "vitest";
-import { catalogById, QURAN_CAIRO_ID, AL_AGHANI_ID } from "@/lib/catalog";
-import { identityStillMatches, isCandidate } from "@/lib/match";
+import { CATALOG, catalogById, QURAN_CAIRO_ID, AL_AGHANI_ID, stationFromRow, type ChannelRow } from "@/lib/catalog";
+import { isCandidate } from "@/lib/match";
+import CHANNELS from "@/lib/channels.json";
 import type { DirectoryStation } from "@/lib/types";
 
 const rec = (p: Partial<DirectoryStation>): DirectoryStation => ({
   uuid: "u", name: "", countrycode: "EG", country: "Egypt", language: "", tags: "", homepage: "", favicon: "", codec: "MP3", bitrate: 0,
   hls: false, url: "https://s/x", urlResolved: "https://s/x", lastcheckok: true, lastcheckoktime: "", votes: 0, clickcount: 0, ...p,
 });
-const quran = catalogById.get(QURAN_CAIRO_ID)!;
-const aghani = catalogById.get(AL_AGHANI_ID)!;
+const row = (p: Partial<ChannelRow>): ChannelRow => ({
+  no: null, name: "", nameEn: null, url: null, format: null, result: null, checkedOn: null, favourite: false, core: null, source: null, notes: null, frequency: null, category: null, ...p,
+});
 
-describe("strict candidate rules", () => {
-  it("Quran: requires Egypt AND the official homepage", () => {
-    expect(isCandidate(quran, rec({ name: "إذاعة القرآن الكريم من القاهرة", homepage: "https://misrquran.gov.eg/" }))).toBe(true);
-    expect(isCandidate(quran, rec({ name: "Radio Quran - القرآن الكريم", homepage: "https://surahquran.com" }))).toBe(false); // 3rd-party EG stream
-    expect(isCandidate(quran, rec({ name: "إذاعة القرآن الكريم", countrycode: "IR", homepage: "https://misrquran.gov.eg" }))).toBe(false);
+describe("catalog comes from the Excel list", () => {
+  it("one station per Excel row, in Excel order, Quran first and Al Aghani second", () => {
+    expect(CATALOG.map((c) => c.nameAr)).toEqual((CHANNELS as ChannelRow[]).map((r) => r.name));
+    expect(CATALOG[0]!.id).toBe(QURAN_CAIRO_ID);
+    expect(CATALOG[1]!.id).toBe(AL_AGHANI_ID);
   });
+  it("every Excel link becomes the station's stream; no Dailymotion player anywhere", () => {
+    for (const r of CHANNELS as ChannelRow[]) {
+      const c = CATALOG.find((x) => x.nameAr === r.name)!;
+      expect(c.directStreams?.[0]?.url ?? null).toBe(r.url);
+      expect(c.officialPlayer).toBeUndefined();
+      expect(c.radioBrowserUuid).toBeUndefined();
+    }
+  });
+  it("known stations keep their stable ids (favorites survive link edits)", () => {
+    for (const id of ["eg-general-program", "eg-9090", "eg-nagham", "eg-mega", "eg-shaaby", "eg-nile-fm", "eg-sout-el-arab", "eg-middle-east", "eg-cultural", "eg-nogoum", "eg-radio-hits-882", "eg-on-sport"])
+      expect(catalogById.has(id), id).toBe(true);
+  });
+  it("‘verified’ only when the sheet says the link returned audio", () => {
+    expect(catalogById.get(QURAN_CAIRO_ID)!.identity.status).toBe("catalog-verified");
+    expect(catalogById.get(AL_AGHANI_ID)!.identity.status).toBe("unverified");
+  });
+  it("an unknown new row still works, with a stable id from its name", () => {
+    const a = stationFromRow(row({ name: "إذاعة جديدة", url: "https://n.example/live" }));
+    const b = stationFromRow(row({ name: "إذاعة جديدة", url: "https://other.example/x" }));
+    expect(a.id).toMatch(/^xl-/);
+    expect(a.id).toBe(b.id);
+    expect(a.directStreams).toEqual([{ url: "https://n.example/live", codec: undefined }]);
+  });
+  it("a row with no link is shown but has no stream", () => {
+    expect(stationFromRow(row({ name: "إذاعة الإسكندرية" })).directStreams).toBeUndefined();
+  });
+});
+
+describe("strict candidate rules (stations without a link)", () => {
   it("Al Aghani: Egypt + name; never another country's Aghani or a generic music stream", () => {
+    const aghani = catalogById.get(AL_AGHANI_ID)!;
     expect(isCandidate(aghani, rec({ name: "ERTU - اذاعه الاغاني" }))).toBe(true);
     expect(isCandidate(aghani, rec({ name: "Aghani Aghani", countrycode: "LB" }))).toBe(false);
     expect(isCandidate(aghani, rec({ name: "Arabic Hits" }))).toBe(false);
     expect(isCandidate(aghani, rec({ name: "Nogoum FM" }))).toBe(false);
-  });
-  it("verified UUID record: accepted on official homepage OR unchanged name; refused if repurposed", () => {
-    expect(identityStillMatches(quran, rec({ name: "x", homepage: "https://misrquran.gov.eg/" }))).toBe(true);
-    expect(identityStillMatches(quran, rec({ name: "إذاعة القرآن الكريم من القاهرة", homepage: "" }))).toBe(true);
-    expect(identityStillMatches(quran, rec({ name: "إذاعة القرآن الكريم من القاهرة", homepage: "http://www.facebook.com/quran.ertu" }))).toBe(true);
-    expect(identityStillMatches(quran, rec({ name: "Some Pop FM", homepage: "https://spam.example" }))).toBe(false);
-    expect(identityStillMatches(quran, rec({ name: "إذاعة القرآن الكريم", countrycode: "IR" }))).toBe(false);
-  });
-});
-
-describe("prefix-matched listings", () => {
-  it("9090: accepted on official homepage or name; refused when repurposed", () => {
-    const s = catalogById.get("eg-9090")!;
-    expect(identityStillMatches(s, rec({ name: "Radio 9090 90.9", homepage: "http://www.9090.fm/" }))).toBe(true);
-    expect(identityStillMatches(s, rec({ name: "Other", homepage: "https://spam.example" }))).toBe(false);
-  });
-  it("every verified catalog station has a UUID or prefix plus a homepage rule", () => {
-    for (const c of [...catalogById.values()].filter((c) => c.identity.status === "catalog-verified" && !c.directStreams)) {
-      expect(c.radioBrowserUuid || c.rbUuidPrefixes?.length).toBeTruthy();
-      expect(c.match?.homepageHints?.length).toBeGreaterThan(0);
-    }
-  });
-  it("every state station plays in-app via a Dailymotion embed, no external page needed", () => {
-    for (const id of ["eg-general-program", "eg-middle-east", "eg-sout-el-arab", "eg-cultural", "eg-music-program", "eg-youth-sports", "eg-radio-masr", "eg-greater-cairo", "eg-al-aghani"]) {
-      expect(catalogById.get(id)?.officialPlayer?.embedUrl).toMatch(/^https:\/\/geo\.dailymotion\.com\/player\/xi5eg\.html\?video=x[0-9a-z]+$/);
-    }
   });
 });

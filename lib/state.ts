@@ -1,5 +1,5 @@
 /** Pure state model + reducers. No browser APIs here, so everything is unit-testable. */
-import { AL_AGHANI_ID, CORE_IDS, QURAN_CAIRO_ID } from "./catalog";
+import { AL_AGHANI_ID, CATALOG, CORE_IDS, QURAN_CAIRO_ID } from "./catalog";
 import type { CustomStation, Lang, PlayableStation, StreamRef } from "./types";
 
 export const SCHEMA = 1;
@@ -46,6 +46,8 @@ export interface AppState {
   recent: { id: string; at: number }[];
   custom: CustomStation[];
   core: string[]; // المحطات الأساسية: user-editable, ordered
+  /** Per-device replacement stream link for a station (e.g. a fresh Maspero/Dailymotion link). */
+  streamOverrides: Record<string, string>;
   hidden: string[]; // stations the user deleted (catalog/directory); custom ones are removed outright
   bindings: Record<string, Binding>;
   known: Record<string, PlayableStation>; // snapshot of directory stations the user interacted with
@@ -73,6 +75,7 @@ export function emptyState(): AppState {
     recent: [],
     custom: [],
     core: [...CORE_IDS],
+    streamOverrides: {},
     hidden: [],
     bindings: {},
     known: {},
@@ -101,6 +104,9 @@ export const SEEDS: Record<number, Seed> = {
       { id: "g-fav", name: "المفضلة", stationIds: [] },
     ],
   },
+  // 21/10/2026: stations marked Favourite = Yes in the Excel list.
+  // Seed-1 stations are excluded so a station the user already removed is never re-added.
+  2: { favorites: CATALOG.filter((c) => c.favourite && c.id !== QURAN_CAIRO_ID && c.id !== AL_AGHANI_ID).map((c) => c.id), pinned: [], groups: [] },
 };
 export const CURRENT_SEED = Math.max(...Object.keys(SEEDS).map(Number));
 
@@ -196,6 +202,14 @@ export function addCustomStation(s: AppState, name: string, url: string, id = Da
     favorites: [...s.favorites, key],
     core: toCore ? [...s.core, key] : s.core,
   };
+}
+
+/** Replace (or with an empty url, reset) a station's stream link on this device. */
+export function setStreamOverride(s: AppState, id: string, url: string): AppState {
+  const next = { ...s.streamOverrides };
+  if (url.trim()) next[id] = url.trim();
+  else delete next[id];
+  return { ...s, streamOverrides: next };
 }
 
 /** Add to / remove from المحطات الأساسية (does not delete the station). */
@@ -307,6 +321,10 @@ export function importState(current: AppState, raw: unknown): AppState {
       : current.recent,
     custom,
     core: isStrArr(d.core) ? uniq(d.core).slice(0, 30) : current.core,
+    streamOverrides:
+      d.streamOverrides && typeof d.streamOverrides === "object"
+        ? Object.fromEntries(Object.entries(d.streamOverrides).filter(([, v]) => httpUrl(v)).slice(0, 200)) as Record<string, string>
+        : current.streamOverrides,
     hidden: isStrArr(d.hidden) ? uniq(d.hidden) : current.hidden,
     bindings,
     known,
@@ -329,6 +347,7 @@ export function hydrate(raw: string | null): AppState {
     };
     // Users from before the editable core list get the original defaults once.
     if (!Array.isArray(p.core)) s.core = [...CORE_IDS];
+    if (!s.streamOverrides || typeof s.streamOverrides !== "object" || Array.isArray(s.streamOverrides)) s.streamOverrides = {};
     for (const k of ["favorites", "pinned", "groups", "recent", "custom", "hidden"] as const) if (!Array.isArray(s[k])) (s as unknown as Record<string, unknown>)[k] = [];
     return applySeeds(s);
   } catch {

@@ -71,8 +71,8 @@ describe("catalog search ranking", () => {
     expect(r[0]!.entry.key).toBe(QURAN_CAIRO_ID);
   });
 
-  it("a directory record that IS the verified catalog station is folded, not duplicated", () => {
-    const own = rec({ uuid: "8e63e8b6-4e70-4bc0-9f5d-07e8477a4480", name: "إذاعة القرآن الكريم من القاهرة" });
+  it("a directory record using the catalog station's stream is folded, not duplicated", () => {
+    const own = rec({ uuid: "8e63e8b6-4e70-4bc0-9f5d-07e8477a4480", name: "إذاعة القرآن الكريم من القاهرة", url: "http://stream.radiojar.com/8s5u5tpdtwzuv", urlResolved: "http://stream.radiojar.com/8s5u5tpdtwzuv/" });
     const keys = runSearch("القرآن الكريم القاهرة", {}, s, [own]).map((x) => x.entry.key);
     expect(keys.filter((k) => k === QURAN_CAIRO_ID)).toHaveLength(1);
     expect(keys).not.toContain(`rb:${own.uuid}`);
@@ -97,8 +97,8 @@ describe("dedupe", () => {
 });
 
 describe("directory noise control", () => {
-  it("prefix-verified catalog stations swallow their own directory listings", () => {
-    const shaaby = rec({ uuid: "9346c66b-0000-0000-0000-000000000000", name: "SHA3BY FM", homepage: "https://95-fm.com/en" });
+  it("catalog stations swallow directory listings of the same stream", () => {
+    const shaaby = rec({ uuid: "9346c66b-0000-0000-0000-000000000000", name: "SHA3BY FM", homepage: "https://95-fm.com/en", url: "https://radio95.radioca.st/stream/1", urlResolved: "https://radio95.radioca.st/stream/1" });
     const keys = runSearch("sha3by", {}, s, [shaaby]).map((r) => r.entry.key);
     expect(keys).toContain("eg-shaaby");
     expect(keys).not.toContain(`rb:${shaaby.uuid}`);

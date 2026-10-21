@@ -1,9 +1,9 @@
 "use client";
 import { use, useEffect, useState } from "react";
 import { Icon } from "@/components/Icon";
-import { IdentityBadge, Logo, useStationStatus } from "@/components/Stations";
+import { hasStream, IdentityBadge, Logo, useStationStatus } from "@/components/Stations";
+import { StreamLinkEditor } from "@/components/StreamLinkEditor";
 import { isActive, LiveBadge, statusLabel } from "@/components/Player";
-import { hasEmbed, openEmbed } from "@/components/OfficialPlayer";
 import { directory, DirectoryError } from "@/lib/directoryClient";
 import { player } from "@/lib/player/controller";
 import { dedupe, hostOf } from "@/lib/search/rank";
@@ -30,7 +30,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
   const v = viewOf(id);
   if (!v) return <div className="page"><p className="muted">{t.resolve["not-found"]}</p></div>;
   const c = v.catalog;
-  const streams: StreamRef[] = binding ? [binding.stream, ...binding.alternatives] : known?.streams ?? [];
+  const streams: StreamRef[] = binding ? [binding.stream, ...binding.alternatives] : c?.directStreams?.length ? c.directStreams.map((d) => ({ url: d.url, codec: d.codec, source: "custom" as const })) : known?.streams ?? [];
   const active = current && ui && isActive(ui.status);
 
   return (
@@ -44,7 +44,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
             {v.frequency ? ` · ${v.frequency}` : ""}
           </p>
           <p className="row gap-s wrap">
-            {!(v.identity === "unverified" && (info?.lastOkAt || hasEmbed(id))) && <IdentityBadge v={v} />}
+            {!(v.identity === "unverified" && (info?.lastOkAt || hasStream(id))) && <IdentityBadge v={v} />}
             {isCore && <span className="badge badge-gold">{t.core}</span>}
             <span className="badge badge-neutral">{t.categories[v.category]}</span>
           </p>
@@ -52,7 +52,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
       </header>
 
       <div className="row gap-s wrap">
-        <button className="btn btn-gold" onClick={() => (v.identity === "unverified" && hasEmbed(id) ? openEmbed(id) : active ? player().stop() : player().playById(id))}>
+        <button className="btn btn-gold" onClick={() => (active ? player().stop() : player().playById(id))}>
           <Icon name={active ? "stop" : "play"} size={18} /> {active ? t.stop : t.play}
         </button>
         <button className={`btn ${fav ? "is-on" : ""}`} onClick={() => update((s) => toggleFavorite(s, id))} aria-pressed={fav}>
@@ -75,6 +75,8 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
           </button>
         </p>
       )}
+
+      {c && <StreamLinkEditor id={id} failed={!!(current && ui && (ui.status === "unavailable" || ui.status === "resolve-failed"))} />}
 
       <details className="tech">
         <summary>{lang === "ar" ? "تفاصيل تقنية" : "Technical details"}</summary>
@@ -147,7 +149,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
         )}
       </section>
 
-      {c && c.identity.status === "unverified" && !hasEmbed(id) && <Candidates catalogId={c.id} />}
+      {c && c.identity.status === "unverified" && !hasStream(id) && <Candidates catalogId={c.id} />}
 
       {c && (
         <section className="panel">

@@ -46,6 +46,8 @@ export interface CatalogStation {
    * verified. Plays only while visible (no background/lock-screen playback).
    */
   officialPlayer?: { embedUrl?: string; pageUrl: string; provider: string };
+  /** "Favourite" column of the Excel list: added to favorites once, on first run after it appears. */
+  favourite?: boolean;
   identity: {
     status: "catalog-verified" | "unverified";
     sources: { label: string; url: string }[];

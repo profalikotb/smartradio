@@ -145,7 +145,10 @@ export async function resolveStation(id: string, signal?: AbortSignal): Promise<
   const c = catalogById.get(id);
 
   if (c) {
-    if (c.directStreams?.length) {
+    const override = s.streamOverrides[id];
+    if (override || c.directStreams?.length) {
+      // A link replaced on this device is tried first; the Excel link stays as the fallback.
+      const list = [...(override ? [{ url: override }] : []), ...(c.directStreams ?? []).filter((d) => d.url !== override)];
       const station: PlayableStation = {
         id,
         nameAr: c.nameAr,
@@ -154,7 +157,7 @@ export async function resolveStation(id: string, signal?: AbortSignal): Promise<
         category: c.category,
         website: c.website,
         identity: "catalog-verified",
-        streams: streamsFromUrls(c.directStreams),
+        streams: streamsFromUrls(list),
       };
       return { ok: true, station, fromCache: false };
     }
