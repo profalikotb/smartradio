@@ -17,7 +17,9 @@ export function StreamLinkEditor({ id, failed }: { id: string; failed: boolean }
   const lang = useLang();
   const ar = lang === "ar";
   const override = useAppState((s) => s.streamOverrides[id]);
-  const excel = catalogById.get(id)?.directStreams?.[0]?.url;
+  const cat = catalogById.get(id);
+  const excel = cat?.directStreams?.[0]?.url ?? cat?.playlist?.base;
+  const isPlaylist = !override && !!cat?.playlist;
   const current = override ?? excel;
   const [open, setOpen] = useState(false);
   const [url, setUrl] = useState("");
@@ -57,6 +59,7 @@ export function StreamLinkEditor({ id, failed }: { id: string; failed: boolean }
         {override
           ? ar ? "رابط مستبدل على هذا الجهاز (رابط ملف Excel يُستخدم كاحتياطي)." : "Replaced on this device (the Excel link is the fallback)."
           : ar ? "من ملف Excel." : "From the Excel file."}
+        {isPlaylist && (ar ? " تُشغَّل السور سورةً بعد سورة (001–114) وتبدأ من سورة عشوائية." : " Plays surah after surah (001–114), starting at a random surah.")}
         {signed && (ar ? " هذا رابط موقّع من ماسبيرو/Dailymotion وينتهي بعد فترة؛ عند توقفه الصق رابطًا جديدًا." : " This is a signed Maspero/Dailymotion link and expires; paste a fresh one when it stops.")}
       </p>
       {failed && signed && !open && (

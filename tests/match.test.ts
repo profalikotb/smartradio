@@ -24,7 +24,7 @@ describe("catalog comes from the Excel list", () => {
   it("every Excel link becomes the station's stream; no Dailymotion player anywhere", () => {
     for (const r of ROWS.filter((x) => x.show !== false)) {
       const c = CATALOG.find((x) => x.nameAr === r.name)!;
-      expect(c.directStreams?.[0]?.url ?? null).toBe(r.url);
+      expect(c.directStreams?.[0]?.url ?? c.playlist?.base ?? null).toBe(r.url);
       expect(c.officialPlayer).toBeUndefined();
       expect(c.radioBrowserUuid).toBeUndefined();
     }
@@ -90,5 +90,14 @@ describe("automatic listing choice for tribute stations", () => {
       rec({ uuid: "best", lastcheckok: true, url: "https://c/x", urlResolved: "https://c/x", votes: 10 }),
     ]);
     expect(r.map((x) => x.uuid)).toEqual(["best", "http", "dead"]);
+  });
+});
+
+describe("Mustafa Ismail tajweed: surah-by-surah playlist", () => {
+  it("is a playlist station over the mujawwad folder, separate from his live radio", () => {
+    const c = catalogById.get("mustafa-ismail-mojawwad")!;
+    expect(c.playlist).toEqual({ base: "https://cdn.mp3quran.net/audio/mustafa-ismail/r2/", count: 114 });
+    expect(c.directStreams).toBeUndefined();
+    expect(catalogById.get("mustafa-ismail")!.directStreams![0]!.url).toBe("https://backup.qurango.net/radio/mustafa_ismail");
   });
 });

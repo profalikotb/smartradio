@@ -9,6 +9,7 @@ class FakeAudio implements AudioLike {
   preload = "";
   error: { code: number } | null = null;
   playMode: "ok" | "notallowed" = "ok";
+  ended = false;
   loads: string[] = [];
   private l: Record<string, ((e?: unknown) => void)[]> = {};
   get src() {
@@ -296,5 +297,54 @@ describe("low-data mode and sleep timer", () => {
     vi.setSystemTime(Date.now() + 16 * 60_000); // clock moved, timers didn't run
     e.checkSleepOverdue();
     expect(e.getSnapshot().status).toBe("paused");
+  });
+});
+
+describe("recitation playlist (surah files)", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+  const pl = (): PlayableStation => ({
+    ...st("pl", "https://x/001.mp3", "https://x/002.mp3", "https://x/003.mp3"),
+    playlist: true,
+  });
+  it("a finished surah starts the next one, in order, and wraps after the last", async () => {
+    const e = mk();
+    e.play(pl());
+    await flush();
+    audio.emit("playing");
+    for (let i = 0; i < 3; i++) {
+      // Real browsers: reaching the end sets ended=true and fires "pause" BEFORE "ended".
+      audio.ended = true;
+      audio.paused = true;
+      audio.emit("pause");
+      audio.emit("ended");
+      audio.ended = false;
+      await flush();
+      audio.emit("playing");
+    }
+    expect(audio.loads).toEqual(["https://x/001.mp3", "https://x/002.mp3", "https://x/003.mp3", "https://x/001.mp3"]);
+    expect(e.getSnapshot().status).toBe("playing");
+    expect(failed).toEqual([]);
+  });
+  it("a broken surah file is skipped instead of stopping the station", async () => {
+    const e = mk();
+    e.play(pl());
+    await flush();
+    audio.error = { code: 4 };
+    audio.emit("error"); // unsupported → no retries
+    await flush();
+    expect(audio.loads.at(-1)).toBe("https://x/002.mp3");
+    expect(e.getSnapshot().status).not.toBe("unavailable");
+  });
+  it("stops (unavailable) when every surah fails", async () => {
+    const e = mk();
+    e.play(pl());
+    for (let i = 0; i < 4; i++) {
+      await flush();
+      audio.error = { code: 4 };
+      audio.emit("error");
+    }
+    await flush();
+    expect(e.getSnapshot().status).toBe("unavailable");
   });
 });

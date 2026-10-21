@@ -74,6 +74,7 @@ const KNOWN: { match: string[]; meta: Meta }[] = [
   { match: ["الشعراوي", "الشعراوى", "sharawy", "shaarawy"], meta: { id: "sharawy", nameEn: "Sheikh Al-Sha'rawi Radio", category: "religious", aliases: ["الشعراوي", "اذاعة الشعراوي", "تفسير الشعراوي", "sharawy", "shaarawy", "shaarawi"] } },
   { match: ["الحصري مجود", "الحصرى مجود", "hussary mujawwad"], meta: { id: "husary-mojawwad", nameEn: "Al-Husary Radio (Mujawwad)", category: "quran", aliases: ["الحصري مجود", "husary mujawwad"] } },
   { match: ["الحصري", "الحصرى", "hussary", "husary"], meta: { id: "husary", nameEn: "Al-Husary Radio", category: "quran", aliases: ["الحصري", "محمود خليل الحصري", "husary", "hussary", "hosary"] } },
+  { match: ["مصطفى إسماعيل تجويد", "مصطفى اسماعيل تجويد", "مصطفى إسماعيل مجود", "مصطفى اسماعيل مجود", "mustafa ismail mujawwad"], meta: { id: "mustafa-ismail-mojawwad", nameEn: "Mustafa Ismail — Tajweed (Mujawwad)", category: "quran", aliases: ["مصطفى اسماعيل تجويد", "مصطفى اسماعيل مجود", "mustafa ismail mujawwad", "mustafa ismail tajweed"] } },
   { match: ["مصطفى إسماعيل", "مصطفى اسماعيل", "mustafa ismail"], meta: { id: "mustafa-ismail", nameEn: "Mustafa Ismail Radio", category: "quran", aliases: ["مصطفى اسماعيل", "mustafa ismail", "mostafa ismail"] } },
   { match: ["المنشاوي مجود", "المنشاوى مجود", "minshawi mujawwad"], meta: { id: "minshawi-mojawwad", nameEn: "Al-Minshawi Radio (Mujawwad)", category: "quran", aliases: ["المنشاوي مجود", "minshawi mujawwad"] } },
   { match: ["المنشاوي", "المنشاوى", "minshawi"], meta: { id: "minshawi", nameEn: "Al-Minshawi Radio", category: "quran", aliases: ["المنشاوي", "محمد صديق المنشاوي", "minshawi", "menshawy"] } },
@@ -108,7 +109,8 @@ export function stationFromRow(row: ChannelRow): CatalogStation {
     frequency: row.frequency || m.frequency,
     website: m.website,
     core: CORE_IDS.includes(m.id as (typeof CORE_IDS)[number]),
-    directStreams: row.url ? (row.urls?.length ? row.urls : [row.url]).map((url) => ({ url, codec: row.format ?? undefined })) : undefined,
+    playlist: isPlaylist(row) ? { base: row.url!.replace(/\/?$/, "/"), count: 114 } : undefined,
+    directStreams: isPlaylist(row) ? undefined : row.url ? (row.urls?.length ? row.urls : [row.url]).map((url) => ({ url, codec: row.format ?? undefined })) : undefined,
     match: { names: m.matchNames ?? m.aliases.slice(0, 2), anyCountry: m.anyCountry },
     favourite: row.favourite,
     identity: {
@@ -118,6 +120,11 @@ export function stationFromRow(row: ChannelRow): CatalogStation {
       note: [row.result, row.checkedOn ? `(${row.checkedOn})` : "", row.notes].filter(Boolean).join(" — ") || "From the Excel station list.",
     },
   };
+}
+
+/** Format column says "Playlist" (or قائمة/سور) and the link is a folder of 001.mp3…114.mp3 files. */
+function isPlaylist(row: ChannelRow): boolean {
+  return !!row.url && /playlist|قائمة|سور/i.test(row.format ?? "");
 }
 
 function build(rows: ChannelRow[]): CatalogStation[] {

@@ -50,6 +50,8 @@ export interface AudioLike {
   canPlayType(t: string): string;
   addEventListener(type: string, fn: (e?: unknown) => void): void;
   error?: { code: number } | null;
+  /** true once playback reached the end (browsers fire "pause" right before "ended"). */
+  ended?: boolean;
 }
 
 export interface HlsLike {
@@ -81,6 +83,7 @@ export const CONNECT_TIMEOUT_MS = 15_000;
 export const STALL_TIMEOUT_MS = 20_000;
 export const MAX_RETRIES_PER_STREAM = 3;
 export const BACKOFF_MS = [1_000, 2_500, 6_000];
+export const MAX_PLAYLIST_SKIPS = 5;
 
 const isPlaylistUrl = (u: string) => /\.(pls|m3u)(\?|$)/i.test(u);
 const isHlsUrl = (s: StreamRef) => s.hls || /\.m3u8(\?|$)/i.test(s.url);
@@ -96,6 +99,7 @@ export function orderStreams(streams: StreamRef[], lowData: boolean): StreamRef[
 export class PlayerEngine {
   private audio: AudioLike | null = null;
   private hls: HlsLike | null = null;
+  private trackFails = 0;
   private gen = 0;
   private timers = new Set<unknown>();
   private stallTimer: unknown = null;
@@ -154,12 +158,13 @@ export class PlayerEngine {
     a.addEventListener("waiting", () => this.onWaiting(g()));
     a.addEventListener("stalled", () => this.onWaiting(g()));
     a.addEventListener("error", () => this.onError(g(), this.mediaErrorKind()));
-    a.addEventListener("ended", () => this.onError(g(), "network"));
+    a.addEventListener("ended", () => (this.snap.station?.playlist ? this.nextTrack(g()) : this.onError(g(), "network")));
     a.addEventListener("pause", () => {
       // Pauses caused by our own teardown arrive after src was removed → ignore them.
       // A pause while a source is attached (headset button, Control Center, OS interruption)
       // is the user's decision and is treated as intentional.
-      if (!a.src || this.gen === this.unlockGen) return;
+      // A pause fired because the file/stream reached its end is not the user's pause.
+      if (!a.src || this.gen === this.unlockGen || a.ended) return;
       if (this.snap.status === "playing" || this.snap.status === "buffering") {
         this.intentionalPause = true;
         this.clearAttemptTimers();
@@ -211,7 +216,8 @@ export class PlayerEngine {
     this.intentionalPause = false;
     this.resumeWhenOnline = false;
     const https = this.deps.pageIsHttps();
-    const all = orderStreams(station.streams, this.lowData);
+    // Recitation playlists keep their surah order; live stations are ordered by preference.
+    const all = station.playlist ? station.streams : orderStreams(station.streams, this.lowData);
     // On an HTTPS page, HTTPS streams go first. HTTP streams are kept as a last resort: the page's
     // CSP has upgrade-insecure-requests, so the browser requests them over HTTPS on the same host.
     const secure = all.filter((s) => s.url.startsWith("https:"));
@@ -396,6 +402,7 @@ export class PlayerEngine {
     if (gen !== this.gen || gen === this.unlockGen || this.intentionalPause) return;
     this.clearAttemptTimers();
     const first = this.snap.status !== "playing";
+    this.trackFails = 0;
     this.set({ status: "playing", attempt: 0, error: undefined, needsTap: false, retryAt: undefined });
     if (first && this.snap.station) this.deps.onPlaybackOk?.(this.snap.station.id);
     if (!this.tick)
@@ -431,6 +438,11 @@ export class PlayerEngine {
       this.armTimer(nextGen, delay, () => void this.attempt(nextGen));
       return;
     }
+    // Recitation playlist: skip a broken surah file, but stop after several failures in a row.
+    if (this.snap.station?.playlist && this.streams.length > 1) {
+      if (++this.trackFails < Math.min(MAX_PLAYLIST_SKIPS, this.streams.length)) return this.nextTrack(gen, kind);
+      return this.fail(gen, kind);
+    }
     // Same-station alternative stream, if any.
     if (this.snap.streamIndex + 1 < this.streams.length) {
       const nextGen = ++this.gen;
@@ -439,6 +451,16 @@ export class PlayerEngine {
       return;
     }
     this.fail(gen, kind);
+  }
+
+  /** Playlist stations: next surah (wraps from the last to the first). */
+  private nextTrack(gen: number, error?: ErrorKind) {
+    if (gen !== this.gen || gen === this.unlockGen || this.intentionalPause || !this.streams.length) return;
+    this.clearAttemptTimers();
+    this.teardownSource();
+    const nextGen = ++this.gen;
+    this.set({ streamIndex: (this.snap.streamIndex + 1) % this.streams.length, attempt: 0, error, status: "buffering" });
+    void this.attempt(nextGen);
   }
 
   private fail(gen: number, kind: ErrorKind) {

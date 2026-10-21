@@ -17,6 +17,8 @@ export interface StreamRef {
   directoryOk?: boolean;
   directoryCheckedAt?: string;
   source: "radio-browser" | "custom" | "playlist";
+  /** Track label for recitation stations that play surah files in sequence (e.g. «سورة البقرة»). */
+  label?: string;
 }
 
 export interface CatalogStation {
@@ -46,6 +48,8 @@ export interface CatalogStation {
    * verified. Plays only while visible (no background/lock-screen playback).
    */
   officialPlayer?: { embedUrl?: string; pageUrl: string; provider: string };
+  /** Recitation played surah by surah from a folder of files: <base>001.mp3 … <base>114.mp3. */
+  playlist?: { base: string; count: number };
   /** "Favourite" column of the Excel list: added to favorites once, on first run after it appears. */
   favourite?: boolean;
   identity: {
@@ -87,6 +91,8 @@ export interface PlayableStation {
   website?: string;
   identity: IdentityStatus;
   streams: StreamRef[];
+  /** Streams are consecutive tracks (surah files): play each to the end, then the next, looping. */
+  playlist?: boolean;
 }
 
 export interface CustomStation {

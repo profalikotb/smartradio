@@ -120,7 +120,7 @@ export function BottomPlayer({ hidden }: { hidden?: boolean }) {
             <span className={`bp-status st-${ui.status}`}>
               <LiveBadge status={ui.status} />
               {ui.status !== "playing" && statusLabel(ui.status, t)}
-              {ui.status === "playing" && <span className="muted"> {t.liveBroadcast}</span>}
+              {ui.status === "playing" && <span className="muted"> {ui.snap.station?.playlist && ui.snap.stream?.label ? ui.snap.stream.label : t.liveBroadcast}</span>}
             </span>
           </span>
         </button>
@@ -162,7 +162,7 @@ function PlayerSheet({ onClose }: { onClose: () => void }) {
             {view.country === "EG" ? (lang === "ar" ? "مصر" : "Egypt") : view.country}
           </p>
           <p className={`sheet-status st-${ui.status}`}>
-            <LiveBadge status={ui.status} /> {ui.status === "playing" ? t.liveBroadcast : statusLabel(ui.status, t)}
+            <LiveBadge status={ui.status} /> {ui.status === "playing" ? (ui.snap.station?.playlist && ui.snap.stream?.label ? ui.snap.stream.label : t.liveBroadcast) : statusLabel(ui.status, t)}
           </p>
         </div>
         <div className="sheet-controls">

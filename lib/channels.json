@@ -393,7 +393,26 @@
     "favourite": false,
     "core": null,
     "source": "https://mp3quran.net/api/v3/radios?language=ar",
-    "notes": "Mustafa Ismail, 24/7 (mp3quran.net has one Mustafa Ismail radio; no separate murattal/mujawwad radios exist there).",
+    "notes": "Mustafa Ismail live radio (mp3quran.net; recitation style not stated by the source). For tajweed see the next row.",
+    "frequency": null,
+    "category": null,
+    "show": true
+  },
+  {
+    "no": 26,
+    "name": "إذاعة مصطفى إسماعيل تجويد",
+    "nameEn": null,
+    "url": "https://cdn.mp3quran.net/audio/mustafa-ismail/r2/",
+    "urls": [
+      "https://cdn.mp3quran.net/audio/mustafa-ismail/r2/"
+    ],
+    "format": "Playlist (114 سورة)",
+    "result": "mp3quran.net المصحف المجود (moshaf 288, 114 surahs) / not checked",
+    "checkedOn": "22/10/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://mp3quran.net/api/v3/reciters?language=ar",
+    "notes": "Mustafa Ismail — المصحف المجود. No live tajweed radio exists; the app plays the surah files 001–114 in order, starting at a random surah, looping. Format \"Playlist\" = folder of surah files.",
     "frequency": null,
     "category": null,
     "show": true

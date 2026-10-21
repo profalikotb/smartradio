@@ -1,6 +1,7 @@
 "use client";
 /** Turns any station id (catalog / rb:<uuid> / custom:<id>) into something the player can use. */
 import { catalogById } from "./catalog";
+import { SURAHS } from "./surahs";
 import { directory, DirectoryError } from "./directoryClient";
 import { identityStillMatches } from "./match";
 import { categorize } from "./search/rank";
@@ -154,6 +155,24 @@ export async function resolveStation(id: string, signal?: AbortSignal): Promise<
 
   if (c) {
     const override = s.streamOverrides[id];
+    if (!override && c.playlist) {
+      // Surah-by-surah recitation: start at a random surah (radio feel), then continue in order.
+      const { base, count } = c.playlist;
+      const tracks: StreamRef[] = Array.from({ length: count }, (_, i) => ({
+        url: `${base}${String(i + 1).padStart(3, "0")}.mp3`,
+        codec: "MP3",
+        source: "playlist" as const,
+        label: `سورة ${SURAHS[i] ?? i + 1}`,
+      }));
+      const start = Math.floor(Math.random() * count);
+      const station: PlayableStation = {
+        id, nameAr: c.nameAr, nameEn: c.nameEn, country: "EG", category: c.category, website: c.website,
+        identity: c.identity.status === "catalog-verified" ? "catalog-verified" : "unverified",
+        playlist: true,
+        streams: [...tracks.slice(start), ...tracks.slice(0, start)],
+      };
+      return { ok: true, station, fromCache: false };
+    }
     if (override || c.directStreams?.length) {
       // A link replaced on this device is tried first; the Excel link stays as the fallback.
       const list = [...(override ? [{ url: override }] : []), ...(c.directStreams ?? []).filter((d) => d.url !== override)];

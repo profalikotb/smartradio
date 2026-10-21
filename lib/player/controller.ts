@@ -230,12 +230,13 @@ class Controller {
     if (!st) return;
     const s = getState();
     const title = s.nicknames[st.id] || (s.settings.lang === "ar" ? st.nameAr : st.nameEn);
-    const key = `${st.id}|${title}|${s.settings.lang}`;
+    const track = st.playlist ? snap.stream?.label : undefined;
+    const key = `${st.id}|${title}|${s.settings.lang}|${track ?? ""}`;
     if (key === this.lastMeta) return;
     this.lastMeta = key;
     ms.metadata = new MediaMetadata({
       title,
-      artist: s.settings.lang === "ar" ? "بث مباشر" : "Live broadcast",
+      artist: track ?? (s.settings.lang === "ar" ? "بث مباشر" : "Live broadcast"),
       album: s.settings.lang === "ar" ? "راديو أ.د. على قطب الذكي" : "Prof Ali Kotb Smart Radio",
       artwork: [
         { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
