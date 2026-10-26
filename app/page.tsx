@@ -3,6 +3,9 @@ import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { AddStationForm } from "@/components/AddStation";
 import { useState } from "react";
+import { TafsirContinue } from "@/components/TafsirContinue";
+import { continueLast, getManifest, useManifest } from "@/lib/tafsir/client";
+import { useProgress } from "@/lib/tafsir/progress";
 import { CoreButton, StationRow } from "@/components/Stations";
 import { CATALOG } from "@/lib/catalog";
 import { CoreEditor } from "@/components/CoreEditor";
@@ -26,6 +29,8 @@ export default function Home() {
   const [editCore, setEditCore] = useState(false);
   const core = useAppState((s) => s.core);
   const ctl = useController();
+  const tafsirLast = useProgress((p) => p.last);
+  useManifest(); // warm the Tafsir index so "continue" works in one tap
 
   const otherPinned = pinned.filter((id) => !core.includes(id));
   const lastView = lastId ? viewOf(lastId) : null;
@@ -40,6 +45,35 @@ export default function Home() {
         <h1 className="greeting">{t.greeting}</h1>
         <p className="muted">{mounted ? fmtDate(Date.now()) : " "}</p>
       </section>
+
+      <nav className="dash" aria-label={lang === "ar" ? "الأقسام الرئيسية" : "Main sections"}>
+        <a href="#eg-h" className="dash-btn">
+          <span className="dash-ico" aria-hidden>📻</span>
+          <span>{lang === "ar" ? "المحطات المصرية" : "Egyptian radio"}</span>
+        </a>
+        <Link href="/tafsir" className="dash-btn is-tafsir">
+          <span className="dash-ico" aria-hidden>📖</span>
+          <span>{lang === "ar" ? "تفسير الشيخ الشعراوي" : "Al-Sha'rawi Tafsir"}</span>
+        </Link>
+        <Link href="/favorites" className="dash-btn">
+          <span className="dash-ico" aria-hidden>❤️</span>
+          <span>{lang === "ar" ? "المفضلة" : "Favorites"}</span>
+        </Link>
+        <button
+          className="dash-btn"
+          disabled={!mounted || (!tafsirLast && !lastView)}
+          onClick={() => {
+            const m = getManifest();
+            if (tafsirLast && m && continueLast(m)) return;
+            if (lastView) player().playById(lastView.id);
+          }}
+        >
+          <span className="dash-ico" aria-hidden>▶</span>
+          <span>{lang === "ar" ? "استكمال الاستماع" : "Continue listening"}</span>
+        </button>
+      </nav>
+
+      <TafsirContinue compact />
 
       {showResume && lastView && (
         <button className="resume-card" onClick={() => player().playById(lastView.id)}>

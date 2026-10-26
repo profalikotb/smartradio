@@ -9,6 +9,7 @@ import { useAppState, update } from "@/lib/store";
 import { fmt, fmtTime, type Dict } from "@/lib/i18n";
 import { useLang, useT, useTicker } from "@/lib/ui";
 import { displayName, viewOf } from "@/lib/stations";
+import { MiniProgress, OnDemandPanel } from "./OnDemand";
 import { toggleFavorite } from "@/lib/state";
 
 export type UiStatus = PlayerSnapshot["status"] | "resolving" | "resolve-failed";
@@ -52,7 +53,8 @@ export function LiveBadge({ status }: { status: UiStatus }) {
   const t = useT();
   const lang = useLang();
   // Recitation playlists play recordings, not a live broadcast.
-  const recorded = usePlayer().station?.playlist;
+  const st = usePlayer().station;
+  const recorded = st?.playlist || st?.onDemand;
   if (status !== "playing") return null;
   const label = recorded ? (lang === "ar" ? "تلاوة" : "Recitation") : t.live;
   return (
@@ -136,6 +138,7 @@ export function BottomPlayer({ hidden }: { hidden?: boolean }) {
           )}
           <PlayButton />
         </div>
+        <MiniProgress />
         <RetryLine />
       </section>
       {open && view && <PlayerSheet onClose={() => setOpen(false)} />}
@@ -150,6 +153,7 @@ function PlayerSheet({ onClose }: { onClose: () => void }) {
   const nick = useAppState((s) => s.nicknames);
   const id = ui.stationId ?? "";
   const view = viewOf(id);
+  const onDemand = !!ui.snap.station?.onDemand;
   if (!view) return null;
   return (
     <div className="sheet-backdrop" onClick={onClose}>
@@ -169,22 +173,32 @@ function PlayerSheet({ onClose }: { onClose: () => void }) {
             <LiveBadge status={ui.status} /> {ui.status === "playing" ? (ui.snap.station?.playlist && ui.snap.stream?.label ? ui.snap.stream.label : t.liveBroadcast) : statusLabel(ui.status, t)}
           </p>
         </div>
-        <div className="sheet-controls">
-          <button className="icon-btn icon-lg" onClick={() => player().step(-1)} aria-label={t.previous}>
-            <Icon name={lang === "ar" ? "next" : "prev"} size={28} />
-          </button>
-          <PlayButton size="lg" />
-          <button className="icon-btn icon-lg" onClick={() => player().step(1)} aria-label={t.next}>
-            <Icon name={lang === "ar" ? "prev" : "next"} size={28} />
-          </button>
-        </div>
+        {onDemand ? (
+          <OnDemandPanel />
+        ) : (
+          <div className="sheet-controls">
+            <button className="icon-btn icon-lg" onClick={() => player().step(-1)} aria-label={t.previous}>
+              <Icon name={lang === "ar" ? "next" : "prev"} size={28} />
+            </button>
+            <PlayButton size="lg" />
+            <button className="icon-btn icon-lg" onClick={() => player().step(1)} aria-label={t.next}>
+              <Icon name={lang === "ar" ? "prev" : "next"} size={28} />
+            </button>
+          </div>
+        )}
         <RetryLine />
         <VolumeControl />
         <SleepTimer />
-        <ConnectionPanel />
-        <Link href={`/station/${encodeURIComponent(id)}`} className="btn btn-block" onClick={onClose}>
-          <Icon name="info" size={18} /> {t.details}
-        </Link>
+        {!onDemand && <ConnectionPanel />}
+        {id.startsWith("tafsir:") ? (
+          <Link href={id === "tafsir:all" ? "/tafsir?mode=radio" : `/tafsir/${id.slice(7)}`} className="btn btn-block" onClick={onClose}>
+            <Icon name="quran" size={18} /> {lang === "ar" ? "قائمة الحلقات" : "Episode list"}
+          </Link>
+        ) : (
+          <Link href={`/station/${encodeURIComponent(id)}`} className="btn btn-block" onClick={onClose}>
+            <Icon name="info" size={18} /> {t.details}
+          </Link>
+        )}
       </div>
     </div>
   );

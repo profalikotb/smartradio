@@ -88,15 +88,6 @@ export default function SettingsPage() {
         </h2>
         <p className="hint">{t.privacyNote}</p>
         <p className="hint">{t.localNote}</p>
-        <button
-          className="btn btn-danger"
-          onClick={async () => {
-            await fetch("/api/logout", { method: "POST" }).catch(() => {});
-            location.href = "/login";
-          }}
-        >
-          {t.logout}
-        </button>
       </section>
     </div>
   );

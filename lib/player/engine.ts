@@ -36,7 +36,14 @@ export interface PlayerSnapshot {
   sleepEndsAt?: number;
   volumeSupported: boolean;
   volume: number;
+  /** On-demand media only: playback position / duration in seconds, speed and repeat mode. */
+  position: number;
+  duration: number;
+  rate: number;
+  repeat: RepeatMode;
 }
+
+export type RepeatMode = "off" | "one" | "all";
 
 export interface AudioLike {
   src: string;
@@ -52,6 +59,10 @@ export interface AudioLike {
   error?: { code: number } | null;
   /** true once playback reached the end (browsers fire "pause" right before "ended"). */
   ended?: boolean;
+  currentTime?: number;
+  duration?: number;
+  playbackRate?: number;
+  defaultPlaybackRate?: number;
 }
 
 export interface HlsLike {
@@ -77,6 +88,10 @@ export interface EngineDeps {
   onMediaAction?(action: "play" | "pause" | "next" | "previous"): void;
   /** Data URI of a short silent clip used by unlock(). Optional (tests omit it). */
   silentSrc?: string;
+  /** On-demand: where to start a track (saved position), when the engine moves to it by itself. */
+  startPositionFor?(station: PlayableStation, index: number): number | undefined;
+  /** On-demand: a track played to its end. */
+  onTrackEnded?(station: PlayableStation, index: number): void;
 }
 
 export const CONNECT_TIMEOUT_MS = 15_000;
@@ -123,7 +138,13 @@ export class PlayerEngine {
     listenedSeconds: 0,
     volumeSupported: true,
     volume: 1,
+    position: 0,
+    duration: 0,
+    rate: 1,
+    repeat: "off",
   };
+  /** Seek to apply once the file's metadata is loaded (resume position). */
+  private pendingSeek: number | undefined;
   lowData = false;
 
   constructor(private deps: EngineDeps) {}
@@ -158,7 +179,29 @@ export class PlayerEngine {
     a.addEventListener("waiting", () => this.onWaiting(g()));
     a.addEventListener("stalled", () => this.onWaiting(g()));
     a.addEventListener("error", () => this.onError(g(), this.mediaErrorKind()));
-    a.addEventListener("ended", () => (this.snap.station?.playlist ? this.nextTrack(g()) : this.onError(g(), "network")));
+    a.addEventListener("ended", () => this.onEnded(g()));
+    const onMeta = () => {
+      if (!this.snap.station?.onDemand || !a.src) return;
+      const d = a.duration;
+      if (d && Number.isFinite(d) && Math.round(d) !== this.snap.duration) this.set({ duration: Math.round(d) });
+      if (this.pendingSeek !== undefined && d && Number.isFinite(d)) {
+        const at = Math.max(0, Math.min(this.pendingSeek, d - 1));
+        this.pendingSeek = undefined;
+        try {
+          a.currentTime = at;
+        } catch {
+          /* not seekable yet */
+        }
+        this.set({ position: Math.floor(at) });
+      }
+    };
+    a.addEventListener("loadedmetadata", onMeta);
+    a.addEventListener("durationchange", onMeta);
+    a.addEventListener("timeupdate", () => {
+      if (!this.snap.station?.onDemand || !a.src || this.pendingSeek !== undefined) return;
+      const p = Math.floor(a.currentTime ?? 0);
+      if (p !== this.snap.position) this.set({ position: p });
+    });
     a.addEventListener("pause", () => {
       // Pauses caused by our own teardown arrive after src was removed → ignore them.
       // A pause while a source is attached (headset button, Control Center, OS interruption)
@@ -210,7 +253,7 @@ export class PlayerEngine {
   }
 
   /** Start a station. Must be called from a user gesture the first time (browser autoplay policy). */
-  play(station: PlayableStation) {
+  play(station: PlayableStation, opts: { index?: number; at?: number } = {}) {
     this.stopInternal();
     const gen = ++this.gen;
     this.intentionalPause = false;
@@ -221,12 +264,16 @@ export class PlayerEngine {
     // On an HTTPS page, HTTPS streams go first. HTTP streams are kept as a last resort: the page's
     // CSP has upgrade-insecure-requests, so the browser requests them over HTTPS on the same host.
     const secure = all.filter((s) => s.url.startsWith("https:"));
-    this.streams = https ? [...secure, ...all.filter((s) => !s.url.startsWith("https:"))] : all;
+    this.streams = station.playlist || !https ? all : [...secure, ...all.filter((s) => !s.url.startsWith("https:"))];
+    const index = Math.max(0, Math.min(opts.index ?? 0, Math.max(0, this.streams.length - 1)));
+    this.pendingSeek = station.onDemand && opts.at && opts.at > 0 ? opts.at : undefined;
     this.onlyInsecure = https && all.length > 0 && !secure.length;
     this.set({
       station,
       stream: undefined,
-      streamIndex: 0,
+      streamIndex: index,
+      position: station.onDemand ? Math.floor(opts.at ?? 0) : 0,
+      duration: station.onDemand ? this.streams[index]?.seconds ?? 0 : 0,
       streamCount: this.streams.length,
       attempt: 0,
       error: undefined,
@@ -251,6 +298,14 @@ export class PlayerEngine {
   }
 
   pause() {
+    // Recorded episode: a real pause — keep the loaded file and position so Resume continues there.
+    if (this.snap.station?.onDemand && this.audio?.src && (this.snap.status === "playing" || this.snap.status === "buffering")) {
+      this.intentionalPause = true;
+      this.gen++;
+      this.clearAttemptTimers();
+      this.audio.pause();
+      return this.set({ status: "paused", retryAt: undefined });
+    }
     this.intentionalPause = true;
     this.resumeWhenOnline = false;
     this.gen++; // cancel pending retries/fetches
@@ -264,7 +319,62 @@ export class PlayerEngine {
   toggle() {
     const st = this.snap.status;
     if (st === "playing" || st === "buffering" || st === "connecting") return this.pause();
-    if (this.snap.station) this.play(this.snap.station);
+    this.resume();
+  }
+
+  /** Continue after a pause: recorded episodes continue at the same second; live radio reconnects. */
+  resume() {
+    const station = this.snap.station;
+    if (!station) return;
+    if (station.onDemand && this.snap.status === "completed") return this.play(station, { index: 0 });
+    if (station.onDemand && this.audio?.src && this.snap.status === "paused" && !this.snap.needsTap) {
+      const gen = ++this.gen;
+      const a = this.audio;
+      this.intentionalPause = false;
+      this.set({ status: "buffering" });
+      this.armTimer(gen, CONNECT_TIMEOUT_MS, () => this.onError(gen, "timeout"));
+      a.play().catch((e: { name?: string }) => {
+        if (gen !== this.gen) return;
+        if (e?.name === "NotAllowedError") return this.set({ status: "paused", needsTap: true, error: "autoplay-blocked" });
+        this.onError(gen, this.deps.isOnline() ? "network" : "offline");
+      });
+      return;
+    }
+    if (station.onDemand) return this.play(station, { index: this.snap.streamIndex, at: this.snap.position });
+    this.play(station);
+  }
+
+  /** Recorded episodes: jump to a second / move by ±seconds. */
+  seekTo(seconds: number) {
+    if (!this.snap.station?.onDemand) return;
+    const max = this.snap.duration > 0 ? this.snap.duration - 1 : Number.MAX_SAFE_INTEGER;
+    const t = Math.max(0, Math.min(seconds, max));
+    const a = this.audio;
+    if (a?.src && this.pendingSeek === undefined) {
+      try {
+        a.currentTime = t;
+      } catch {
+        this.pendingSeek = t;
+      }
+    } else this.pendingSeek = t;
+    this.set({ position: Math.floor(t) });
+  }
+
+  seekBy(delta: number) {
+    this.seekTo((this.audio?.src && this.pendingSeek === undefined ? this.audio.currentTime ?? this.snap.position : this.snap.position) + delta);
+  }
+
+  setRate(rate: number) {
+    const r = Math.max(0.5, Math.min(2, rate));
+    if (this.audio) {
+      this.audio.defaultPlaybackRate = r;
+      this.audio.playbackRate = r;
+    }
+    this.set({ rate: r });
+  }
+
+  setRepeat(mode: RepeatMode) {
+    this.set({ repeat: mode });
   }
 
   /** Manual retry: restart from the first stream of the current station. */
@@ -338,7 +448,9 @@ export class PlayerEngine {
   handleOnline() {
     if (this.resumeWhenOnline && !this.intentionalPause && this.snap.station) {
       this.resumeWhenOnline = false;
-      this.play(this.snap.station);
+      const st = this.snap.station;
+      if (st.onDemand) this.play(st, { index: this.snap.streamIndex, at: this.snap.position });
+      else this.play(st);
     }
   }
 
@@ -380,6 +492,10 @@ export class PlayerEngine {
       inst.attachMedia(audio);
     } else {
       audio.src = url;
+    }
+    if (this.snap.station?.onDemand) {
+      audio.defaultPlaybackRate = this.snap.rate;
+      audio.playbackRate = this.snap.rate;
     }
 
     try {
@@ -431,6 +547,8 @@ export class PlayerEngine {
     }
     const permanent = kind === "unsupported" || kind === "insecure-only" || kind === "playlist" || kind === "decode";
     const attempt = this.snap.attempt;
+    // Recorded episode interrupted mid-way: the retry continues from the same second.
+    if (this.snap.station?.onDemand && this.snap.position > 0 && this.pendingSeek === undefined) this.pendingSeek = this.snap.position;
     if (!permanent && attempt < MAX_RETRIES_PER_STREAM) {
       const delay = BACKOFF_MS[attempt]! + Math.floor(Math.random() * 400);
       const nextGen = ++this.gen;
@@ -440,7 +558,8 @@ export class PlayerEngine {
     }
     // Recitation playlist: skip a broken surah file, but stop after several failures in a row.
     if (this.snap.station?.playlist && this.streams.length > 1) {
-      if (++this.trackFails < Math.min(MAX_PLAYLIST_SKIPS, this.streams.length)) return this.nextTrack(gen, kind);
+      const atEnd = !this.loops() && this.snap.streamIndex >= this.streams.length - 1;
+      if (!atEnd && ++this.trackFails < Math.min(MAX_PLAYLIST_SKIPS, this.streams.length)) return this.nextTrack(gen, kind);
       return this.fail(gen, kind);
     }
     // Same-station alternative stream, if any.
@@ -453,10 +572,44 @@ export class PlayerEngine {
     this.fail(gen, kind);
   }
 
+  /** Does the playlist wrap around? Radio playlists always; recorded episodes only with "repeat all". */
+  private loops(): boolean {
+    const st = this.snap.station;
+    if (!st) return false;
+    if (st.onDemand) return this.snap.repeat === "all";
+    return st.loop ?? true;
+  }
+
+  private onEnded(gen: number) {
+    const st = this.snap.station;
+    if (!st?.playlist && !st?.onDemand) return this.onError(gen, "network"); // live stream ended → reconnect
+    if (gen !== this.gen || this.intentionalPause) return;
+    const index = this.snap.streamIndex;
+    if (st.onDemand) this.deps.onTrackEnded?.(st, index);
+    if (st.onDemand && this.snap.repeat === "one" && this.audio) {
+      try {
+        this.audio.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+      this.set({ position: 0 });
+      this.audio.play().catch(() => this.onError(gen, "network"));
+      return;
+    }
+    if (index >= this.streams.length - 1 && !this.loops()) {
+      this.clearAttemptTimers();
+      this.teardownSource();
+      return this.set({ status: "completed", position: this.snap.duration });
+    }
+    this.nextTrack(gen);
+  }
+
   /** Playlist stations: next surah (wraps from the last to the first). */
   /** Lock-screen / player next & previous on a recitation playlist: move between recordings. */
   skipTrack(delta: 1 | -1): boolean {
     if (!this.snap.station?.playlist || this.streams.length < 2) return false;
+    const to = this.snap.streamIndex + delta;
+    if (!this.loops() && (to < 0 || to >= this.streams.length)) return true; // at the first/last episode: stay
     this.intentionalPause = false;
     this.trackFails = 0;
     this.nextTrack(this.gen, undefined, delta);
@@ -469,7 +622,11 @@ export class PlayerEngine {
     this.teardownSource();
     const nextGen = ++this.gen;
     const n = this.streams.length;
-    this.set({ streamIndex: (this.snap.streamIndex + delta + n) % n, attempt: 0, error, status: "buffering" });
+    const index = (this.snap.streamIndex + delta + n) % n;
+    const station = this.snap.station!;
+    const at = station.onDemand ? this.deps.startPositionFor?.(station, index) : undefined;
+    this.pendingSeek = at && at > 0 ? at : undefined;
+    this.set({ streamIndex: index, attempt: 0, error, status: "buffering", position: Math.floor(at ?? 0), duration: this.streams[index]?.seconds ?? 0 });
     void this.attempt(nextGen);
   }
 

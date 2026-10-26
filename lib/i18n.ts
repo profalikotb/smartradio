@@ -12,6 +12,7 @@ const ar = {
   settings: "الإعدادات",
   help: "التعليمات",
   core: "المحطات الأساسية",
+  tafsir: "التفسير",
   pinned: "المثبتة",
   recent: "المستمع إليها مؤخرًا",
   lastStation: "آخر محطة",
@@ -59,6 +60,7 @@ const ar = {
     buffering: "جارٍ التحميل…",
     offline: "لا يوجد اتصال",
     unavailable: "غير متاح",
+    completed: "اكتمل",
   } satisfies Record<PlayerStatus, string>,
   errors: {
     timeout: "انتهت مهلة الاتصال بالبث.",
@@ -193,6 +195,7 @@ const en: Dict = {
   settings: "Settings",
   help: "Help",
   core: "Core stations",
+  tafsir: "Tafsir",
   pinned: "Pinned",
   recent: "Recently played",
   lastStation: "Last station",
@@ -240,6 +243,7 @@ const en: Dict = {
     buffering: "Buffering…",
     offline: "Offline",
     unavailable: "Unavailable",
+    completed: "Completed",
   },
   errors: {
     timeout: "The stream did not respond in time.",

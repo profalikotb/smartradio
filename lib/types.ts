@@ -19,6 +19,10 @@ export interface StreamRef {
   source: "radio-browser" | "custom" | "playlist";
   /** Track label for recitation stations that play surah files in sequence (e.g. «سورة البقرة»). */
   label?: string;
+  /** Stable id of a recorded episode (for saved progress). */
+  id?: string;
+  /** Known duration in seconds (from the source's metadata), shown before the file loads. */
+  seconds?: number;
 }
 
 export interface CatalogStation {
@@ -95,6 +99,10 @@ export interface PlayableStation {
   streams: StreamRef[];
   /** Streams are consecutive tracks (surah files): play each to the end, then the next, looping. */
   playlist?: boolean;
+  /** Recorded episodes (not a live broadcast): seekable, real pause/resume, speed, repeat. */
+  onDemand?: boolean;
+  /** Playlist wraps from the last track to the first (default true; on-demand uses the repeat mode). */
+  loop?: boolean;
 }
 
 export interface CustomStation {
@@ -104,4 +112,4 @@ export interface CustomStation {
   createdAt: string;
 }
 
-export type PlayerStatus = "idle" | "connecting" | "playing" | "paused" | "buffering" | "offline" | "unavailable";
+export type PlayerStatus = "idle" | "connecting" | "playing" | "paused" | "buffering" | "offline" | "unavailable" | "completed";

@@ -61,7 +61,10 @@ class Controller {
         };
       },
       silentSrc: silentWav(),
+      startPositionFor: (st, i) => this.hooks.startPositionFor?.(st, i),
+      onTrackEnded: (st, i) => this.hooks.onTrackEnded?.(st, i),
       onPlaybackOk: (id) => {
+        if (this.engine.getSnapshot().station?.onDemand) return; // recordings keep their own history
         this.refreshedAfterFail.delete(id);
         update((s) => {
           let n = recordPlayback(s, id, true);
@@ -69,7 +72,9 @@ class Controller {
           return { ...n, settings: { ...n.settings, lastStationId: id } };
         });
       },
-      onPlaybackFailed: (id, kind) => this.onFailed(id, kind),
+      onPlaybackFailed: (id, kind) => {
+        if (!this.engine.getSnapshot().station?.onDemand) this.onFailed(id, kind);
+      },
     });
     this.engine.lowData = getState().settings.lowData;
     this.wireBrowser();
@@ -83,6 +88,19 @@ class Controller {
   private set(p: ControllerState) {
     this.st = p;
     for (const l of this.listeners) l();
+  }
+
+  private hooks: Pick<import("./engine").EngineDeps, "startPositionFor" | "onTrackEnded"> = {};
+  setTafsirHooks(h: Pick<import("./engine").EngineDeps, "startPositionFor" | "onTrackEnded">) {
+    this.hooks = h;
+  }
+
+  /** Play an already-built station (recorded episodes) from a tap, at an episode/second. */
+  playPrepared(station: PlayableStation, opts: { index?: number; at?: number } = {}) {
+    this.engine.unlock();
+    this.resolveAbort?.abort();
+    this.set({});
+    this.engine.play(station, opts);
   }
 
   /** Call from a tap handler. Starts immediately from cache when possible, otherwise resolves first. */
@@ -163,12 +181,15 @@ class Controller {
   toggle() {
     const snap = this.engine.getSnapshot();
     if (this.st.pendingId) return this.stop();
+    if (snap.station?.onDemand) return this.engine.toggle(); // recordings: pause/resume in place
     if (snap.status === "playing" || snap.status === "buffering" || snap.status === "connecting") return this.engine.pause();
     const id = snap.station?.id ?? getState().settings.lastStationId;
     if (id) this.playById(id);
   }
 
   retry() {
+    const cur = this.engine.getSnapshot();
+    if (cur.station?.onDemand) return this.engine.play(cur.station, { index: cur.streamIndex, at: cur.position });
     const id = this.st.resolveError?.id ?? this.engine.getSnapshot().station?.id;
     if (id) {
       this.servedFromCache.delete(id);
@@ -189,6 +210,7 @@ class Controller {
   step(delta: 1 | -1) {
     // On a recitation playlist, next/previous move between recordings instead of stations.
     if (!this.st.pendingId && this.engine.skipTrack(delta)) return;
+    if (this.engine.getSnapshot().station?.onDemand) return; // never jump from a recording to a radio station
     const favs = getState().favorites;
     if (!favs.length) return;
     const cur = this.st.pendingId ?? this.engine.getSnapshot().station?.id;
@@ -217,8 +239,10 @@ class Controller {
       safe("stop", () => this.engine.pause());
       safe("nexttrack", () => this.step(1));
       safe("previoustrack", () => this.step(-1));
-      safe("seekbackward", null);
-      safe("seekforward", null);
+      // Seek controls are offered only for recordings; live radio has no timeline.
+      safe("seekbackward", (d) => this.engine.seekBy(-(d.seekOffset || 10)));
+      safe("seekforward", (d) => this.engine.seekBy(d.seekOffset || 10));
+      safe("seekto", (d) => d.seekTime !== undefined && this.engine.seekTo(d.seekTime));
       this.engine.subscribe(() => this.syncMediaSession());
     }
   }
@@ -230,6 +254,13 @@ class Controller {
     ms.playbackState = snap.status === "playing" || snap.status === "buffering" ? "playing" : snap.status === "idle" ? "none" : "paused";
     const st = snap.station;
     if (!st) return;
+    if (st.onDemand && "setPositionState" in ms && snap.duration > 0) {
+      try {
+        ms.setPositionState({ duration: snap.duration, position: Math.min(snap.position, snap.duration), playbackRate: snap.rate });
+      } catch {
+        /* invalid state while loading */
+      }
+    }
     const s = getState();
     const title = s.nicknames[st.id] || (s.settings.lang === "ar" ? st.nameAr : st.nameEn);
     const track = st.playlist ? snap.stream?.label : undefined;
@@ -238,7 +269,7 @@ class Controller {
     this.lastMeta = key;
     ms.metadata = new MediaMetadata({
       title,
-      artist: track ?? (s.settings.lang === "ar" ? "بث مباشر" : "Live broadcast"),
+      artist: track ?? (s.settings.lang === "ar" ? (st.onDemand ? "تسجيل" : "بث مباشر") : st.onDemand ? "Recording" : "Live broadcast"),
       album: s.settings.lang === "ar" ? "راديو أ.د. على قطب الذكي" : "Prof Ali Kotb Smart Radio",
       artwork: [
         { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
@@ -267,6 +298,10 @@ const idleSnap: PlayerSnapshot = {
   listenedSeconds: 0,
   volumeSupported: true,
   volume: 1,
+  position: 0,
+  duration: 0,
+  rate: 1,
+  repeat: "off",
 };
 const idleCtl: ControllerState = {};
 const noop = () => () => {};

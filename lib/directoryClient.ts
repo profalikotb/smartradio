@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "./api";
 import type { DirectoryStation } from "./types";
 
 export class DirectoryError extends Error {
@@ -21,7 +22,7 @@ async function call(params: Record<string, string>, signal?: AbortSignal, timeou
   signal?.addEventListener("abort", onAbort);
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const r = await fetch(`/api/directory?${qs}`, { signal: ctrl.signal, credentials: "same-origin" });
+    const r = await apiFetch(`/api/directory?${qs}`, { signal: ctrl.signal });
     if (r.status === 401) throw new DirectoryError("auth");
     if (r.status === 503) throw new DirectoryError("unavailable");
     if (!r.ok) throw new DirectoryError("error");
@@ -49,7 +50,7 @@ export const directory = {
 };
 
 export async function resolvePlaylist(url: string, signal: AbortSignal): Promise<{ hls: boolean; urls: string[] }> {
-  const r = await fetch(`/api/resolve-playlist?url=${encodeURIComponent(url)}`, { signal, credentials: "same-origin" });
+  const r = await apiFetch(`/api/resolve-playlist?url=${encodeURIComponent(url)}`, { signal });
   if (!r.ok) throw new Error("playlist");
   return (await r.json()) as { hls: boolean; urls: string[] };
 }

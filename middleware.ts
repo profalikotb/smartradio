@@ -1,19 +1,26 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/server/session";
 
-/** Fail-closed gate for every page and API route except the login flow and static PWA assets. */
-export async function middleware(req: NextRequest) {
-  const { pathname, search } = req.nextUrl;
-  const ok = await verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
-  if (ok) {
-    if (pathname === "/login") return NextResponse.redirect(new URL("/", req.url));
-    return withHeaders(NextResponse.next());
+/**
+ * No password: every page opens directly.
+ *
+ * The API routes are server-side helpers for this app only (radio directory lookups, playlist
+ * resolution, Internet Archive track lists). They hold no secrets, but they must not become a free
+ * proxy for other websites, so they answer only requests made by this app's own pages:
+ *  - modern browsers mark same-site calls with  Sec-Fetch-Site: same-origin
+ *  - older browsers: our client always sends  X-Smart-Radio: 1 ; another website cannot add that
+ *    header to a cross-origin request without a CORS preflight, which these routes never approve.
+ * The old login endpoints are retired.
+ */
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  if (pathname === "/login") return withHeaders(NextResponse.redirect(new URL("/", req.url)));
+  if (pathname === "/api/login" || pathname === "/api/logout") return withHeaders(NextResponse.json({ error: "gone" }, { status: 410 }));
+  if (pathname.startsWith("/api/")) {
+    const site = req.headers.get("sec-fetch-site");
+    const own = site === "same-origin" || req.headers.get("x-smart-radio") === "1";
+    if (!own) return withHeaders(NextResponse.json({ error: "forbidden" }, { status: 403 }));
   }
-  if (pathname === "/login" || pathname === "/api/login") return withHeaders(NextResponse.next());
-  if (pathname.startsWith("/api/")) return withHeaders(NextResponse.json({ error: "unauthorized" }, { status: 401 }));
-  const login = new URL("/login", req.url);
-  if (pathname !== "/") login.searchParams.set("next", pathname + search);
-  return withHeaders(NextResponse.redirect(login));
+  return withHeaders(NextResponse.next());
 }
 
 function withHeaders(res: NextResponse) {
@@ -22,6 +29,5 @@ function withHeaders(res: NextResponse) {
 }
 
 export const config = {
-  // Public: Next assets, icons, manifest, service worker, offline page. They contain no personal data.
   matcher: ["/((?!_next/static|_next/image|icons/|manifest.webmanifest|sw.js|offline.html|favicon.ico|robots.txt).*)"],
 };

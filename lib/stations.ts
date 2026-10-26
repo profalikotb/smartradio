@@ -1,6 +1,8 @@
 "use client";
 /** Turns any station id (catalog / rb:<uuid> / custom:<id>) into something the player can use. */
 import { catalogById } from "./catalog";
+import { apiFetch } from "./api";
+import { tafsirName } from "./tafsir/parse";
 import { SURAHS } from "./surahs";
 import { directory, DirectoryError } from "./directoryClient";
 import { identityStillMatches } from "./match";
@@ -113,6 +115,8 @@ export function playableFromDirectory(group: DirectoryStation[]): PlayableStatio
 
 /** Synchronous view for lists/cards. */
 export function viewOf(id: string, s: AppState = getState()): StationView | null {
+  const tn = tafsirName(id);
+  if (tn) return { id, ...tn, country: "EG", category: "religious", identity: "unverified", core: false };
   const c = catalogById.get(id);
   if (c) {
     const bound = s.bindings[id];
@@ -166,7 +170,7 @@ export async function resolveStation(id: string, signal?: AbortSignal): Promise<
     const override = s.streamOverrides[id];
     if (!override && c.archive) {
       try {
-        const r = await fetch(`/api/archive?ids=${c.archive.ids.map(encodeURIComponent).join(",")}`, { signal, credentials: "same-origin" });
+        const r = await apiFetch(`/api/archive?ids=${c.archive.ids.map(encodeURIComponent).join(",")}`, { signal });
         if (!r.ok) return { ok: false, reason: "directory", detail: "archive" };
         const { tracks } = (await r.json()) as { tracks: { url: string; label: string }[] };
         if (!tracks.length) return { ok: false, reason: "not-found" };

@@ -10,6 +10,11 @@ class FakeAudio implements AudioLike {
   error: { code: number } | null = null;
   playMode: "ok" | "notallowed" = "ok";
   ended = false;
+  currentTime = 0;
+  duration = NaN;
+  playbackRate = 1;
+  defaultPlaybackRate = 1;
+  plays = 0;
   loads: string[] = [];
   private l: Record<string, ((e?: unknown) => void)[]> = {};
   get src() {
@@ -28,6 +33,7 @@ class FakeAudio implements AudioLike {
   play() {
     if (this.playMode === "notallowed") return Promise.reject(Object.assign(new Error("x"), { name: "NotAllowedError" }));
     this.paused = false;
+    this.plays++;
     return Promise.resolve();
   }
   pause() {
@@ -366,5 +372,145 @@ describe("playlist next/previous", () => {
     const f = mk();
     f.play(st("live", "https://x/live"));
     expect(f.skipTrack(1)).toBe(false);
+  });
+});
+
+describe("recorded episodes (on-demand)", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+  const eps = (): PlayableStation => ({
+    id: "tafsir:2", nameAr: "البقرة", nameEn: "Baqarah", country: "EG", category: "religious", identity: "unverified",
+    playlist: true, onDemand: true,
+    streams: [1, 2, 3].map((n) => ({ url: `https://a/ep${n}.mp3`, id: `ep${n}`, seconds: 600, source: "playlist" as const })),
+  });
+  const loaded = (d = 600) => {
+    audio.duration = d;
+    audio.emit("loadedmetadata");
+    audio.emit("playing");
+  };
+
+  it("starts at the saved episode and second", async () => {
+    const e = mk();
+    e.play(eps(), { index: 1, at: 1115 > 600 ? 300 : 300 });
+    await flush();
+    loaded();
+    expect(audio.loads).toEqual(["https://a/ep2.mp3"]);
+    expect(audio.currentTime).toBe(300);
+    expect(e.getSnapshot().position).toBe(300);
+  });
+
+  it("pause keeps the file; resume continues at the same second (no reload)", async () => {
+    const e = mk();
+    e.play(eps());
+    await flush();
+    loaded();
+    audio.currentTime = 95;
+    audio.emit("timeupdate");
+    e.pause();
+    expect(e.getSnapshot().status).toBe("paused");
+    expect(audio.src).toBe("https://a/ep1.mp3");
+    e.resume();
+    await flush();
+    audio.emit("playing");
+    expect(audio.loads).toHaveLength(1);
+    expect(audio.currentTime).toBe(95);
+    expect(e.getSnapshot().status).toBe("playing");
+  });
+
+  it("seek ±10 s, clamped; speed applies now and to the next episode", async () => {
+    const e = mk();
+    e.play(eps());
+    await flush();
+    loaded();
+    audio.currentTime = 5;
+    e.seekBy(-10);
+    expect(audio.currentTime).toBe(0);
+    e.seekBy(10);
+    expect(audio.currentTime).toBe(10);
+    e.seekTo(5000);
+    expect(audio.currentTime).toBe(599);
+    e.setRate(1.25);
+    expect(audio.playbackRate).toBe(1.25);
+    e.skipTrack(1);
+    await flush();
+    expect(audio.playbackRate).toBe(1.25);
+  });
+
+  it("auto next episode, then 'completed' at the end of the surah (repeat off)", async () => {
+    const ended: number[] = [];
+    const e = mk({ onTrackEnded: (_s, i) => ended.push(i) });
+    e.play(eps(), { index: 1 });
+    await flush();
+    loaded();
+    audio.emit("ended");
+    await flush();
+    expect(audio.loads.at(-1)).toBe("https://a/ep3.mp3");
+    loaded();
+    audio.emit("ended");
+    await flush();
+    expect(e.getSnapshot().status).toBe("completed");
+    expect(ended).toEqual([1, 2]);
+  });
+
+  it("repeat episode replays the same file; repeat surah wraps to the first", async () => {
+    const e = mk();
+    e.play(eps(), { index: 2 });
+    await flush();
+    loaded();
+    e.setRepeat("one");
+    audio.currentTime = 599;
+    audio.emit("ended");
+    await flush();
+    expect(audio.loads).toEqual(["https://a/ep3.mp3"]);
+    expect(audio.currentTime).toBe(0);
+    e.setRepeat("all");
+    audio.emit("ended");
+    await flush();
+    expect(audio.loads.at(-1)).toBe("https://a/ep1.mp3");
+  });
+
+  it("auto-next starts the next episode at its own saved position", async () => {
+    const e = mk({ startPositionFor: (_s, i) => (i === 1 ? 120 : undefined) });
+    e.play(eps());
+    await flush();
+    loaded();
+    audio.emit("ended");
+    await flush();
+    loaded();
+    expect(audio.currentTime).toBe(120);
+  });
+
+  it("previous at the first episode / next at the last stay put (no wrap) unless repeating the surah", async () => {
+    const e = mk();
+    e.play(eps());
+    await flush();
+    loaded();
+    e.skipTrack(-1);
+    await flush();
+    expect(audio.loads).toEqual(["https://a/ep1.mp3"]);
+  });
+
+  it("a network drop mid-episode resumes at the same second", async () => {
+    const e = mk();
+    e.play(eps());
+    await flush();
+    loaded();
+    audio.currentTime = 200;
+    audio.emit("timeupdate");
+    audio.emit("error");
+    await vi.advanceTimersByTimeAsync(BACKOFF_MS[0]! + 500);
+    audio.duration = 600;
+    audio.emit("loadedmetadata");
+    expect(audio.loads.at(-1)).toBe("https://a/ep1.mp3");
+    expect(audio.currentTime).toBe(200);
+  });
+
+  it("live radio pause still releases the stream (resume = live edge)", async () => {
+    const e = mk();
+    e.play(st("live", "https://x/live"));
+    await flush();
+    audio.emit("playing");
+    e.pause();
+    expect(audio.src).toBe("");
   });
 });

@@ -38,7 +38,7 @@ export function Logo({ id, size = 48 }: { id?: string; size?: number }) {
   const letter = (name.replace(/^(إذاعة|اذاعة|راديو|radio)\s+/i, "").replace(/^ال/, "").trim()[0] ?? "♪").toUpperCase();
   return (
     <span className={`logo logo-fallback cat-${v?.category ?? "general"}`} style={style} aria-hidden>
-      {v && (v.category === "quran" || v.category === "music") ? <Icon name={CAT_ICON[v.category]} size={Math.round(size * 0.46)} /> : <span style={{ fontSize: size * 0.42 }}>{letter}</span>}
+      {v && (v.category === "quran" || v.category === "religious" || v.category === "music") ? <Icon name={CAT_ICON[v.category]} size={Math.round(size * 0.46)} /> : <span style={{ fontSize: size * 0.42 }}>{letter}</span>}
     </span>
   );
 }

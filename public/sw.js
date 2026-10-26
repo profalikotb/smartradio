@@ -1,7 +1,7 @@
 /* Prof Ali Kotb Smart Radio — service worker.
    Caches the app shell and static assets for offline use. NEVER caches audio, API responses
    with personal data, or anything cross-origin except fonts. Live radio always needs network. */
-const VERSION = "sr-v1";
+const VERSION = "sr-v2"; // v2: no login, Tafsir section
 const SHELL = ["/offline.html", "/icons/icon-192.png", "/icons/icon-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
@@ -28,7 +28,7 @@ self.addEventListener("fetch", (e) => {
     return;
   }
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/")) return; // never cache API (auth-protected, live)
+  if (url.pathname.startsWith("/api/")) return; // never cache API responses here (the app keeps its own copies)
 
   // Immutable Next build assets: cache-first.
   if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
