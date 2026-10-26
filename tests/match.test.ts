@@ -114,3 +114,14 @@ describe("Internet Archive stations (rare recordings)", () => {
     expect(stationFromRow(row({ name: "y", url: "https://s.example/live" })).archive).toBeUndefined();
   });
 });
+
+describe("section-only stations (Excel Show = Section)", () => {
+  it("stay available to their section page but are not listed", async () => {
+    const { LISTED } = await import("@/lib/catalog");
+    expect(catalogById.get("sharawy")?.section).toBe(true);
+    expect(catalogById.get("umm-kulthum")?.section).toBe(true);
+    expect(LISTED.map((c) => c.id)).not.toContain("sharawy");
+    expect(LISTED.map((c) => c.id)).not.toContain("umm-kulthum");
+    expect(LISTED.map((c) => c.id)).toContain("husary");
+  });
+});

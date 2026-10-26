@@ -30,3 +30,13 @@ export function episodesCount(n: number, lang: "ar" | "en" = "ar"): string {
   if (n >= 3 && n <= 10) return `${n} حلقات`;
   return `${n} حلقة`;
 }
+
+/** Arabic number agreement: (1) واحد, (2) dual, (3–10) plural, (11+) singular accusative. */
+export function arCount(n: number, f: { one: string; two: string; few: string; many: string }): string {
+  if (n === 1) return f.one;
+  if (n === 2) return f.two;
+  if (n >= 3 && n <= 10) return `${n} ${f.few}`;
+  return `${n} ${f.many}`;
+}
+export const REC = { one: "تسجيل واحد", two: "تسجيلان", few: "تسجيلات", many: "تسجيلًا" };
+export const SONGS = { one: "أغنية واحدة", two: "أغنيتان", few: "أغانٍ", many: "أغنية" };

@@ -1,4 +1,4 @@
-import { CATALOG } from "../catalog";
+import { CATALOG, LISTED } from "../catalog";
 import type { AppState } from "../state";
 import type { DirectoryStation } from "../types";
 import { parseQuery } from "./query";
@@ -11,7 +11,7 @@ export interface SearchResult {
 }
 
 export function catalogEntries(s: Pick<AppState, "bindings" | "playback" | "custom" | "nicknames">): SearchEntry[] {
-  const out: SearchEntry[] = CATALOG.map((c) => ({
+  const out: SearchEntry[] = LISTED.map((c) => ({
     key: c.id,
     source: "catalog" as const,
     names: [c.nameAr, c.nameEn, ...c.aliases, ...(s.nicknames[c.id] ? [s.nicknames[c.id]!] : [])],

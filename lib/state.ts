@@ -332,6 +332,17 @@ export function importState(current: AppState, raw: unknown): AppState {
   };
 }
 
+/**
+ * Stations moved into their own section (Excel Show = Section: the Al-Sha'rawi and Umm Kulthum live
+ * radios) are no longer stations: remove them from favorites, pins, core and groups.
+ */
+export function dropSectionStations(s: AppState): AppState {
+  const gone = new Set(CATALOG.filter((c) => c.section).map((c) => c.id));
+  if (!gone.size) return s;
+  const keep = (a: string[]) => a.filter((id) => !gone.has(id));
+  return { ...s, favorites: keep(s.favorites), pinned: keep(s.pinned), core: keep(s.core), groups: s.groups.map((g) => ({ ...g, stationIds: keep(g.stationIds) })) };
+}
+
 /** Defensive load of whatever is in storage (old/corrupt data never crashes the app). */
 export function hydrate(raw: string | null): AppState {
   if (!raw) return applySeeds(emptyState());
@@ -349,7 +360,7 @@ export function hydrate(raw: string | null): AppState {
     if (!Array.isArray(p.core)) s.core = [...CORE_IDS];
     if (!s.streamOverrides || typeof s.streamOverrides !== "object" || Array.isArray(s.streamOverrides)) s.streamOverrides = {};
     for (const k of ["favorites", "pinned", "groups", "recent", "custom", "hidden"] as const) if (!Array.isArray(s[k])) (s as unknown as Record<string, unknown>)[k] = [];
-    return applySeeds(s);
+    return applySeeds(dropSectionStations(s));
   } catch {
     return applySeeds(emptyState());
   }

@@ -56,7 +56,8 @@ export function LiveBadge({ status }: { status: UiStatus }) {
   const st = usePlayer().station;
   const recorded = st?.playlist || st?.onDemand;
   if (status !== "playing") return null;
-  const label = recorded ? (lang === "ar" ? "تلاوة" : "Recitation") : t.live;
+  const music = st?.category === "music";
+  const label = recorded ? (lang === "ar" ? (music ? "تسجيل" : "تلاوة") : music ? "Recording" : "Recitation") : t.live;
   return (
     <span className="live-badge" aria-label={label}>
       <span className="live-dot" aria-hidden /> {label}
@@ -190,7 +191,11 @@ function PlayerSheet({ onClose }: { onClose: () => void }) {
         <VolumeControl />
         <SleepTimer />
         {!onDemand && <ConnectionPanel />}
-        {id.startsWith("tafsir:") ? (
+        {id.startsWith("umm:") ? (
+          <Link href={id === "umm:all" ? "/umm?mode=radio" : `/umm/${id.slice(6)}`} className="btn btn-block" onClick={onClose}>
+            <Icon name="music" size={18} /> {lang === "ar" ? "تسجيلات الأغنية" : "Song versions"}
+          </Link>
+        ) : id.startsWith("tafsir:") ? (
           <Link href={id === "tafsir:all" ? "/tafsir?mode=radio" : `/tafsir/${id.slice(7)}`} className="btn btn-block" onClick={onClose}>
             <Icon name="quran" size={18} /> {lang === "ar" ? "قائمة الحلقات" : "Episode list"}
           </Link>

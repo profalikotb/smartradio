@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useSyncExternalStore } from "react";
 import { apiFetch } from "../api";
-import { player } from "../player/controller";
 import type { PlayableStation } from "../types";
 import type { Episode, Manifest } from "./parse";
 import { surahName } from "./parse";
-import { getProgress, markDone, markPlayback, recordPosition, resumePosition, saveNow, setLast, updateProgress } from "./progress";
+import { getProgress, tafsirStore } from "./progress";
+import { playTrack, registerSection, wireOnDemand } from "../ondemand";
 
 /** Station ids used by the shared player for Tafsir playback. */
 export const TAFSIR_PREFIX = "tafsir:";
@@ -108,20 +108,22 @@ export function isTafsir(id?: string): boolean {
 
 
 // ---------- playback ----------
+const TAFSIR_SECTION = {
+  prefix: TAFSIR_PREFIX,
+  store: tafsirStore,
+  lastOf: (st: PlayableStation, index: number, pos: number) => {
+    const ep = st.streams[index];
+    return ep?.id ? { stationId: st.id, surah: surahOf(st, index), episodeId: ep.id, index, pos: Math.floor(pos), at: Date.now() } : null;
+  },
+};
+registerSection(TAFSIR_SECTION);
+
 /**
  * Play an episode (from a tap). Starts at the episode's saved second unless fromStart.
  * Any radio station that was playing stops: there is only one audio element.
  */
 export function playEpisode(station: PlayableStation, index: number, opts: { fromStart?: boolean; at?: number } = {}) {
-  const p = getProgress();
-  const ep = station.streams[index];
-  if (!ep?.id) return;
-  const at = opts.fromStart ? 0 : opts.at ?? resumePosition(p, ep.id);
-  const e = player().engine;
-  e.setRate(p.rate);
-  e.setRepeat(p.repeat);
-  player().playPrepared(station, { index, at });
-  noteLast(station, index, at, true);
+  playTrack(TAFSIR_SECTION, station, index, opts);
 }
 
 /** Continue exactly where the last tafsir listening stopped. */
@@ -144,62 +146,7 @@ function surahOf(station: PlayableStation, index: number): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function noteLast(station: PlayableStation, index: number, pos: number, immediate = false) {
-  const ep = station.streams[index];
-  if (!ep?.id) return;
-  updateProgress((p) => setLast(p, { stationId: station.id, surah: surahOf(station, index), episodeId: ep.id!, index, pos: Math.floor(pos), at: Date.now() }), immediate);
-}
-
-// ---------- engine hooks (installed once) ----------
-let wired = false;
-/** Saves position every few seconds while playing, on pause, on episode change and when hidden. */
+/** Installs position saving for all recorded sections (kept under its old name for Shell). */
 export function wireTafsirProgress() {
-  if (wired || typeof window === "undefined") return;
-  wired = true;
-  const e = player().engine;
-  let lastKey = "";
-  let lastSavedPos = -1;
-  let lastStatus = "";
-  e.subscribe(() => {
-    const s = e.getSnapshot();
-    const st = s.station;
-    if (!st?.onDemand || !isTafsir(st.id)) {
-      lastKey = "";
-      return;
-    }
-    const ep = st.streams[s.streamIndex];
-    if (!ep?.id) return;
-    const key = `${st.id}|${s.streamIndex}`;
-    const changed = key !== lastKey;
-    const statusChanged = s.status !== lastStatus;
-    if (changed) {
-      lastKey = key;
-      lastSavedPos = -1;
-      noteLast(st, s.streamIndex, s.position, true);
-    }
-    if (statusChanged && s.status === "playing") updateProgress((p) => markPlayback(p, ep.id!, true));
-    if (statusChanged && s.status === "unavailable") updateProgress((p) => markPlayback(p, ep.id!, false), true);
-    const playing = s.status === "playing";
-    const paused = statusChanged && (s.status === "paused" || s.status === "completed");
-    if ((playing && Math.abs(s.position - lastSavedPos) >= 5) || paused) {
-      lastSavedPos = s.position;
-      updateProgress((p) => {
-        let n = recordPosition(p, ep.id!, s.position, s.duration || ep.seconds || 0);
-        n = setLast(n, { stationId: st.id, surah: surahOf(st, s.streamIndex), episodeId: ep.id!, index: s.streamIndex, pos: s.position, at: Date.now() });
-        return n;
-      }, paused);
-    }
-    lastStatus = s.status;
-  });
-  player().setTafsirHooks({
-    startPositionFor: (station, index) => {
-      const id = station.streams[index]?.id;
-      return id && isTafsir(station.id) ? resumePosition(getProgress(), id) : undefined;
-    },
-    onTrackEnded: (station, index) => {
-      const id = station.streams[index]?.id;
-      if (id && isTafsir(station.id)) updateProgress((p) => markDone(p, id), true);
-    },
-  });
-  window.addEventListener("pagehide", saveNow);
+  wireOnDemand();
 }

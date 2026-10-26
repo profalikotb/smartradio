@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Icon } from "./Icon";
 import { Logo } from "./Stations";
 import { AddStationForm } from "./AddStation";
-import { CATALOG } from "@/lib/catalog";
+import { LISTED } from "@/lib/catalog";
 import { useAppState, update } from "@/lib/store";
 import { toggleCore } from "@/lib/state";
 import { displayName, viewOf } from "@/lib/stations";
@@ -22,7 +22,7 @@ export function CoreEditor() {
   const [q, setQ] = useState("");
 
   const candidates = useMemo(() => {
-    const ids = [...new Set([...CATALOG.map((c) => c.id), ...custom.map((c) => `custom:${c.id}`), ...favorites])];
+    const ids = [...new Set([...LISTED.map((c) => c.id), ...custom.map((c) => `custom:${c.id}`), ...favorites])];
     return ids.filter((id) => !core.includes(id) && !hidden.includes(id) && viewOf(id));
   }, [core, hidden, custom, favorites]);
 

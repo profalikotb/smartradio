@@ -3,6 +3,7 @@
 import { catalogById } from "./catalog";
 import { apiFetch } from "./api";
 import { tafsirName } from "./tafsir/parse";
+import { ummName } from "./umm/parse";
 import { SURAHS } from "./surahs";
 import { directory, DirectoryError } from "./directoryClient";
 import { identityStillMatches } from "./match";
@@ -115,8 +116,8 @@ export function playableFromDirectory(group: DirectoryStation[]): PlayableStatio
 
 /** Synchronous view for lists/cards. */
 export function viewOf(id: string, s: AppState = getState()): StationView | null {
-  const tn = tafsirName(id);
-  if (tn) return { id, ...tn, country: "EG", category: "religious", identity: "unverified", core: false };
+  const tn = tafsirName(id) ?? ummName(id);
+  if (tn) return { id, ...tn, country: "EG", category: id.startsWith("umm:") ? "music" : "religious", identity: "unverified", core: false };
   const c = catalogById.get(id);
   if (c) {
     const bound = s.bindings[id];

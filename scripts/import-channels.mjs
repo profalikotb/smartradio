@@ -109,6 +109,7 @@ function convert(rows) {
   };
   if (C.name < 0 || C.url < 0) throw new Error("Channel or Stream URL column missing");
   const get = (r, i) => (i >= 0 ? r[i] ?? null : null);
+  const isSection = (v) => typeof v === "string" && /^(section|قسم)$/i.test(v.trim());
   const yes = (v) => typeof v === "string" ? /^(yes|y|true|نعم|1)$/i.test(v) : v === true || v === 1;
   const out = [];
   const warnings = [];
@@ -146,7 +147,10 @@ function convert(rows) {
       frequency: get(r, C.frequency) ? String(get(r, C.frequency)) : null,
       category: get(r, C.category) || null,
       // "Show" column: No hides the station in the app (row and link are kept). Blank = shown.
-      show: C.show >= 0 && get(r, C.show) != null && String(get(r, C.show)).trim() !== "" ? yes(get(r, C.show)) : true,
+      // "Section" (قسم): kept for its own section page (e.g. the live stream inside Tafsir / Umm Kulthum)
+      // but not listed with the radio stations.
+      show: C.show >= 0 && get(r, C.show) != null && String(get(r, C.show)).trim() !== "" ? yes(get(r, C.show)) || isSection(get(r, C.show)) : true,
+      section: C.show >= 0 && isSection(get(r, C.show)),
     });
   }
   return { out, warnings };

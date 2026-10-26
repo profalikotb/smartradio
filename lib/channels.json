@@ -16,7 +16,8 @@
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 2,
@@ -35,7 +36,8 @@
     "notes": "User-provided URL; signed link may expire. Playback not checked. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
     "category": null,
-    "show": false
+    "show": false,
+    "section": false
   },
   {
     "no": 3,
@@ -54,7 +56,8 @@
     "notes": "Updated with user-provided URL on 21/10/2026; signed link may expire. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
     "category": null,
-    "show": false
+    "show": false,
+    "section": false
   },
   {
     "no": 5,
@@ -73,7 +76,8 @@
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 6,
@@ -92,7 +96,8 @@
     "notes": "Directory attribution; stream metadata says No Name.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 7,
@@ -111,7 +116,8 @@
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 8,
@@ -130,7 +136,8 @@
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 9,
@@ -149,7 +156,8 @@
     "notes": "Audio data received; listening not tested.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 10,
@@ -168,7 +176,8 @@
     "notes": "No verified direct URL; video ID x8n6dqq. Searched 21/10/2026; no working direct URL verified. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
     "category": null,
-    "show": false
+    "show": false,
+    "section": false
   },
   {
     "no": 11,
@@ -187,7 +196,8 @@
     "notes": "No verified direct URL; video ID x8n6drt. Searched 21/10/2026; no working direct URL verified. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
     "category": null,
-    "show": false
+    "show": false,
+    "section": false
   },
   {
     "no": 14,
@@ -206,7 +216,8 @@
     "notes": "No verified direct URL; video ID x8n6eci. Searched 21/10/2026; no working direct URL verified. — Hidden 22/10/2026: Maspero publishes it only via Dailymotion; signed links expire within hours.",
     "frequency": null,
     "category": null,
-    "show": false
+    "show": false,
+    "section": false
   },
   {
     "no": 16,
@@ -225,7 +236,8 @@
     "notes": "Official page embeds this source; metadata: Nogoum FM. Audio received; listening not tested.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 17,
@@ -244,7 +256,8 @@
     "notes": "Metadata: Radio Hits. Audio received; listening not tested.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 18,
@@ -263,7 +276,8 @@
     "notes": "Directory attribution; audio received. Station identity not confirmed by listening.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 19,
@@ -280,10 +294,11 @@
     "favourite": false,
     "core": null,
     "source": "https://quran-uni.com/radio/",
-    "notes": "Sheikh Al-Sha'rawi tafsir radio (quran-uni.com). Second line = backup server listed on e-quran.com/pages/radio/imam-al-sharawi.html.",
+    "notes": "Sheikh Al-Sha'rawi tafsir radio (quran-uni.com). Second line = backup server listed on e-quran.com/pages/radio/imam-al-sharawi.html. — 27/10/2026: moved into its own section (Show = Section): not listed with radio stations; plays from the Tafsir page.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": true
   },
   {
     "no": 20,
@@ -303,7 +318,8 @@
     "notes": "Murattal, 24/7. Line 1: mp3quran.net; line 2 (backup): quran-uni.com Minshawi radio (Hafs, murattal).",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 21,
@@ -322,7 +338,8 @@
     "notes": "Mohamed Siddiq Al-Minshawi — mujawwad, 24/7 (mp3quran.net).",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 22,
@@ -336,10 +353,11 @@
     "favourite": false,
     "core": null,
     "source": "https://radio.garden/listen/radio-oum-kalthoum/QNKcRjYa",
-    "notes": "No fixed link: the app finds and plays an Umm Kulthum listing automatically (e.g. Radio Oum Kalthoum, MAP Morocco). Paste a URL here to pin one.",
+    "notes": "No fixed link: the app finds and plays an Umm Kulthum listing automatically (e.g. Radio Oum Kalthoum, MAP Morocco). Paste a URL here to pin one. — 27/10/2026: moved into its own section (Show = Section): not listed with radio stations; plays from the Umm Kulthum page.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": true
   },
   {
     "no": 23,
@@ -358,7 +376,8 @@
     "notes": "Mahmoud Khalil Al-Husary — murattal, 24/7.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 24,
@@ -377,7 +396,8 @@
     "notes": "Mahmoud Khalil Al-Husary — mujawwad, 24/7.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 25,
@@ -396,7 +416,8 @@
     "notes": "Mustafa Ismail live radio (mp3quran.net; recitation style not stated by the source). For tajweed see the next row.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 26,
@@ -415,7 +436,8 @@
     "notes": "Mustafa Ismail — المصحف المجود. No live tajweed radio exists; the app plays the surah files 001–114 in order, starting at a random surah, looping. Format \"Playlist\" = folder of surah files.",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   },
   {
     "no": 27,
@@ -435,6 +457,7 @@
     "notes": "Rare tajweed: concerts & external recordings (1191, uploaded by Reda Mohammed) + 50 rare high-quality recordings. Shuffled like a radio; Next on the lock screen skips to another recording. Format \"Archive ordered\" keeps the order. Add more archive.org/details links (one per line).",
     "frequency": null,
     "category": null,
-    "show": true
+    "show": true,
+    "section": false
   }
 ]

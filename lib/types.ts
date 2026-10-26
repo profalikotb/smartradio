@@ -58,6 +58,8 @@ export interface CatalogStation {
   archive?: { ids: string[]; shuffle: boolean };
   /** "Favourite" column of the Excel list: added to favorites once, on first run after it appears. */
   favourite?: boolean;
+  /** Only used inside a section page (Tafsir / Umm Kulthum live stream), not in station lists. */
+  section?: boolean;
   identity: {
     status: "catalog-verified" | "unverified";
     sources: { label: string; url: string }[];

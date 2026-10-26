@@ -78,7 +78,7 @@ export function CoreButton({ id, editing = false }: { id: string; editing?: bool
   const core = useAppState((s) => s.core);
   const v = viewOf(id);
   const { current, ui, info } = useStationStatus(id);
-  if (!v || hidden) return null;
+  if (!v || hidden || v.catalog?.section) return null;
   const pos = core.indexOf(id);
   const active = current && ui && isActive(ui.status);
   const failed = current && ui && (ui.status === "unavailable" || ui.status === "resolve-failed");
@@ -166,7 +166,7 @@ export function StationRow({ id, view, extra, onPlay, onRemember }: { id: string
   const hidden = useAppState((s) => s.hidden.includes(id));
   const v = view ?? viewOf(id);
   const { current, ui } = useStationStatus(id);
-  if (!v || hidden) return null;
+  if (!v || hidden || v.catalog?.section) return null;
   const active = current && ui && isActive(ui.status);
   const onMain = () => {
     if (onPlay) return onPlay();

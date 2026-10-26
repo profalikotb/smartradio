@@ -6,6 +6,7 @@ import { BottomPlayer } from "./Player";
 import { useOnline, useT } from "@/lib/ui";
 import { useEffect } from "react";
 import { wireTafsirProgress } from "@/lib/tafsir/client";
+import "@/lib/umm/client"; // registers the Umm Kulthum section for progress saving
 import { update } from "@/lib/store";
 
 const NAV = [
@@ -67,6 +68,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <span>{t[n.key]}</span>
               </Link>
             ))}
+            <Link href="/umm" className={`nav-item ${isOn(path, "/umm") ? "active" : ""}`}>
+              <Icon name="music" />
+              <span>{t.umm}</span>
+            </Link>
             <Link href="/drive" className={`nav-item ${path === "/drive" ? "active" : ""}`}>
               <Icon name="car" />
               <span>{t.drive}</span>

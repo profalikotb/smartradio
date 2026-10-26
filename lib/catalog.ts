@@ -36,6 +36,8 @@ export interface ChannelRow {
   category: string | null;
   /** false = hidden via the Excel "Show" column. Older JSON may lack it (= shown). */
   show?: boolean;
+  /** Excel Show = "Section": used inside a section page only, not listed with the radio stations. */
+  section?: boolean;
 }
 
 interface Meta {
@@ -115,6 +117,7 @@ export function stationFromRow(row: ChannelRow): CatalogStation {
     directStreams: isPlaylist(row) || archiveOf(row) ? undefined : row.url ? (row.urls?.length ? row.urls : [row.url]).map((url) => ({ url, codec: row.format ?? undefined })) : undefined,
     match: { names: m.matchNames ?? m.aliases.slice(0, 2), anyCountry: m.anyCountry },
     favourite: row.favourite,
+    section: row.section || undefined,
     identity: {
       status: checkedOk ? "catalog-verified" : "unverified",
       verifiedOn: checkedOk ? row.checkedOn ?? undefined : undefined,
@@ -155,3 +158,5 @@ function build(rows: ChannelRow[]): CatalogStation[] {
 
 export const CATALOG: CatalogStation[] = build(CHANNELS as ChannelRow[]);
 export const catalogById = new Map(CATALOG.map((s) => [s.id, s]));
+/** Stations shown in station lists, search and the core editor (section-only streams excluded). */
+export const LISTED = CATALOG.filter((s) => !s.section);

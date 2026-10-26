@@ -58,12 +58,15 @@ describe("catalog search ranking", () => {
     ["الحصرى مجود", "husary-mojawwad"],
     ["مصطفى اسماعيل", "mustafa-ismail"],
     ["Minshawi", "minshawi"],
-    ["الشعراوى", "sharawy"],
-    ["ام كلثوم", "umm-kulthum"],
     ["نجوم", "eg-nogoum"],
   ])("%s → %s", (q, id) => expect(top(q)).toBe(id));
 
-  it("partial names work", () => expect(top("الشعرا")).toBe("sharawy"));
+  it("partial names work", () => expect(top("نجو")).toBe("eg-nogoum"));
+  it("section-only streams (Al-Sha'rawi live, Umm Kulthum live) are not listed as stations", () => {
+    const keys = [...runSearch("الشعراوي", {}, s, []), ...runSearch("ام كلثوم", {}, s, [])].map((r) => r.entry.key);
+    expect(keys).not.toContain("sharawy");
+    expect(keys).not.toContain("umm-kulthum");
+  });
   it("stations hidden in Excel (Show = No) never appear", () => expect(runSearch("الأغاني", {}, s, []).map((r) => r.entry.key)).not.toContain(AL_AGHANI_ID));
 
   it("core catalog station outranks same-name directory look-alikes from other countries", () => {

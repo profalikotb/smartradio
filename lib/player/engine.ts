@@ -576,7 +576,7 @@ export class PlayerEngine {
   private loops(): boolean {
     const st = this.snap.station;
     if (!st) return false;
-    if (st.onDemand) return this.snap.repeat === "all";
+    if (st.onDemand) return this.snap.repeat === "all" || st.loop === true;
     return st.loop ?? true;
   }
 

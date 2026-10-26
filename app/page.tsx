@@ -4,10 +4,12 @@ import { Icon } from "@/components/Icon";
 import { AddStationForm } from "@/components/AddStation";
 import { useState } from "react";
 import { TafsirContinue } from "@/components/TafsirContinue";
+import { UmmContinue } from "@/components/UmmContinue";
+import { continueUmm, getLibrary, ummStore, useLibrary } from "@/lib/umm/client";
 import { continueLast, getManifest, useManifest } from "@/lib/tafsir/client";
 import { useProgress } from "@/lib/tafsir/progress";
 import { CoreButton, StationRow } from "@/components/Stations";
-import { CATALOG } from "@/lib/catalog";
+import { LISTED } from "@/lib/catalog";
 import { CoreEditor } from "@/components/CoreEditor";
 import { player, useController, usePlayer } from "@/lib/player/controller";
 import { useAppState } from "@/lib/store";
@@ -30,6 +32,8 @@ export default function Home() {
   const core = useAppState((s) => s.core);
   const ctl = useController();
   const tafsirLast = useProgress((p) => p.last);
+  const ummLast = ummStore.use((p) => p.last);
+  useLibrary(); // warm the Umm Kulthum library too
   useManifest(); // warm the Tafsir index so "continue" works in one tap
 
   const otherPinned = pinned.filter((id) => !core.includes(id));
@@ -55,16 +59,25 @@ export default function Home() {
           <span className="dash-ico" aria-hidden>📖</span>
           <span>{lang === "ar" ? "تفسير الشيخ الشعراوي" : "Al-Sha'rawi Tafsir"}</span>
         </Link>
+        <Link href="/umm" className="dash-btn is-umm">
+          <span className="dash-ico" aria-hidden>🎵</span>
+          <span>{lang === "ar" ? "أم كلثوم" : "Umm Kulthum"}</span>
+        </Link>
         <Link href="/favorites" className="dash-btn">
           <span className="dash-ico" aria-hidden>❤️</span>
           <span>{lang === "ar" ? "المفضلة" : "Favorites"}</span>
         </Link>
         <button
-          className="dash-btn"
-          disabled={!mounted || (!tafsirLast && !lastView)}
+          className="dash-btn dash-wide"
+          disabled={!mounted || (!tafsirLast && !ummLast && !lastView)}
           onClick={() => {
+            // Most recent of: Tafsir, Umm Kulthum, then the last radio station.
             const m = getManifest();
+            const lib = getLibrary();
+            const ummFirst = (ummLast?.at ?? 0) > (tafsirLast?.at ?? 0);
+            if (ummFirst && lib && continueUmm(lib)) return;
             if (tafsirLast && m && continueLast(m)) return;
+            if (ummLast && lib && continueUmm(lib)) return;
             if (lastView) player().playById(lastView.id);
           }}
         >
@@ -73,7 +86,7 @@ export default function Home() {
         </button>
       </nav>
 
-      <TafsirContinue compact />
+      {(ummLast?.at ?? 0) > (tafsirLast?.at ?? 0) ? <UmmContinue compact /> : <TafsirContinue compact />}
 
       {showResume && lastView && (
         <button className="resume-card" onClick={() => player().playById(lastView.id)}>
@@ -159,7 +172,7 @@ export default function Home() {
           </div>
         )}
         <ul className="station-list">
-          {CATALOG.filter((c) => !core.includes(c.id))
+          {LISTED.filter((c) => !core.includes(c.id))
             .sort((a, b) => Number(b.identity.status === "catalog-verified") - Number(a.identity.status === "catalog-verified"))
             .map((c) => (
               <StationRow key={c.id} id={c.id} />

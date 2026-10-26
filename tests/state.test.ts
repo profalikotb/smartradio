@@ -163,3 +163,14 @@ describe("stream link replaced on this device", () => {
     expect(s.streamOverrides).toEqual({});
   });
 });
+
+describe("old Al-Sha'rawi / Umm Kulthum channels", () => {
+  it("are removed from favorites, pins, core and groups on load", () => {
+    const s = { ...emptyState(), seedVersion: 99, favorites: ["sharawy", "eg-nogoum", "umm-kulthum"], pinned: ["umm-kulthum"], core: [QURAN_CAIRO_ID, "sharawy"], groups: [{ id: "g", name: "x", stationIds: ["sharawy", "eg-nogoum"] }] };
+    const h = hydrate(JSON.stringify(s));
+    expect(h.favorites).toEqual(["eg-nogoum"]);
+    expect(h.pinned).toEqual([]);
+    expect(h.core).toEqual([QURAN_CAIRO_ID]);
+    expect(h.groups[0]!.stationIds).toEqual(["eg-nogoum"]);
+  });
+});
