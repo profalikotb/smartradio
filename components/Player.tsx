@@ -192,7 +192,7 @@ function PlayerSheet({ onClose }: { onClose: () => void }) {
         <SleepTimer />
         {!onDemand && <ConnectionPanel />}
         {id.startsWith("umm:") ? (
-          <Link href={id === "umm:all" ? "/umm?mode=radio" : `/umm/${id.slice(6)}`} className="btn btn-block" onClick={onClose}>
+          <Link href={id === "umm:all" ? "/umm?mode=radio" : id === "umm:my" ? "/umm?mode=mine" : `/umm/${id.slice(6)}`} className="btn btn-block" onClick={onClose}>
             <Icon name="music" size={18} /> {lang === "ar" ? "تسجيلات الأغنية" : "Song versions"}
           </Link>
         ) : id.startsWith("tafsir:") ? (

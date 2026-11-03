@@ -75,9 +75,9 @@ export default function Home() {
             const m = getManifest();
             const lib = getLibrary();
             const ummFirst = (ummLast?.at ?? 0) > (tafsirLast?.at ?? 0);
-            if (ummFirst && lib && continueUmm(lib)) return;
+            if (ummFirst && continueUmm(lib)) return;
             if (tafsirLast && m && continueLast(m)) return;
-            if (ummLast && lib && continueUmm(lib)) return;
+            if (ummLast && continueUmm(lib)) return;
             if (lastView) player().playById(lastView.id);
           }}
         >

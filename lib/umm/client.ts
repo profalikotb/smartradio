@@ -5,6 +5,8 @@ import type { PlayableStation } from "../types";
 import { createProgressStore } from "../tafsir/progress";
 import { playTrack, registerSection } from "../ondemand";
 import { registerSongNames, type Library, type Song, type Version } from "./parse";
+import { MY_FILES_ID, myFilesStation } from "./local";
+import { player } from "../player/controller";
 
 export const UMM_PREFIX = "umm:";
 export const UMM_ALL_ID = "umm:all";
@@ -123,10 +125,23 @@ export function songByKey(lib: Library, key: string): Song | undefined {
 }
 
 /** Continue the last Umm Kulthum listening at the exact second. */
-export function continueUmm(lib: Library): boolean {
+export function continueUmm(lib: Library | undefined): boolean {
   const p = ummStore.get();
   const last = p.last;
   if (!last) return false;
+  if (last.stationId === MY_FILES_ID) {
+    // Files live in this browser's storage: unlock audio inside the tap, then load them.
+    player().engine.unlock();
+    void myFilesStation().then((st) => {
+      if (!st) return;
+      let index = st.streams.findIndex((s) => s.id === last.episodeId);
+      if (index < 0) index = 0;
+      const saved = ummStore.get().episodes[last.episodeId];
+      playVersion(st, index, { at: saved && !saved.done ? saved.pos : 0 });
+    });
+    return true;
+  }
+  if (!lib) return false;
   let station: PlayableStation | null = null;
   if (last.stationId === UMM_ALL_ID) {
     station = continuousStation(lib);

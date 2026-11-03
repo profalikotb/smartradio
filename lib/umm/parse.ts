@@ -259,6 +259,7 @@ export function registerSongNames(lib: Library) {
 export function ummName(id: string): { nameAr: string; nameEn: string } | null {
   if (!id.startsWith("umm:")) return null;
   if (id === "umm:all") return { nameAr: "أم كلثوم – الاستماع المتصل", nameEn: "Umm Kulthum — continuous" };
+  if (id === "umm:my") return { nameAr: "أم كلثوم – ملفاتي", nameEn: "Umm Kulthum — my files" };
   const t = names.get(id.slice(6));
   return { nameAr: t ? `أم كلثوم – ${t}` : "أم كلثوم", nameEn: t ? `Umm Kulthum — ${t}` : "Umm Kulthum" };
 }

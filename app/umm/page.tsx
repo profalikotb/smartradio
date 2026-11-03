@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { UmmContinue } from "@/components/UmmContinue";
+import { MyFiles } from "@/components/MyFiles";
 import { player, usePlayer } from "@/lib/player/controller";
 import { continuousStation, loadLibrary, playVersion, ummStore, useLibrary, UMM_ALL_ID, UMM_LIVE_ID } from "@/lib/umm/client";
 import { surahStats, toggleFavId, type ListenProgress } from "@/lib/tafsir/progress";
@@ -21,14 +22,15 @@ function versionsCount(n: number, ar: boolean) {
 export default function UmmPage() {
   const ar = useLang() === "ar";
   const mounted = useMounted();
-  const [mode, setMode] = useState<"songs" | "radio">("songs");
+  const [mode, setMode] = useState<"songs" | "radio" | "mine">("songs");
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const { library, status, stale } = useLibrary();
   const progress = ummStore.use((p) => p);
 
   useEffect(() => {
-    if (new URLSearchParams(location.search).get("mode") === "radio") setMode("radio");
+    const m = new URLSearchParams(location.search).get("mode");
+    if (m === "radio" || m === "mine") setMode(m);
   }, []);
 
   const rows = useMemo(() => {
@@ -60,7 +62,10 @@ export default function UmmPage() {
           {ar ? "الأغاني" : "Songs"}
         </button>
         <button role="tab" aria-selected={mode === "radio"} className={mode === "radio" ? "on" : ""} onClick={() => setMode("radio")}>
-          {ar ? "إذاعة أم كلثوم المستمرة" : "Continuous listening"}
+          {ar ? "الإذاعة المستمرة" : "Continuous"}
+        </button>
+        <button role="tab" aria-selected={mode === "mine"} className={mode === "mine" ? "on" : ""} onClick={() => setMode("mine")}>
+          {ar ? "ملفاتي" : "My files"}
         </button>
       </div>
 
@@ -77,7 +82,9 @@ export default function UmmPage() {
       )}
       {stale && library && mounted && <p className="hint">{ar ? "تُعرض المكتبة المحفوظة على هذا الجهاز (تعذّر تحديثها الآن)." : "Showing the library saved on this device."}</p>}
 
-      {mode === "radio" ? (
+      {mode === "mine" ? (
+        <MyFiles />
+      ) : mode === "radio" ? (
         <RadioMode />
       ) : (
         <>

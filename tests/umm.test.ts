@@ -51,3 +51,12 @@ describe("library", () => {
     expect(lib.sources.map((s) => s.ok)).toEqual([true, true, true, false]);
   });
 });
+
+describe("my files: titles", () => {
+  it("recognises the song from the file name, else keeps the name", async () => {
+    const { titleFor } = await import("@/lib/umm/local");
+    expect(titleFor("Enta Omry.flac")).toBe("إنت عمري");
+    expect(titleFor("أراك عصي الدمع 25 مارس 1965.m4a")).toBe("أراك عصي الدمع — 25 مارس 1965");
+    expect(titleFor("track_07.mp3")).toBe("track 07");
+  });
+});

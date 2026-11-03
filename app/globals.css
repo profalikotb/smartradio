@@ -2327,3 +2327,28 @@ details.tech[open] > summary::before {
 .src-link {
   color: var(--text-2);
 }
+.umm .mode-tabs {
+  grid-template-columns: repeat(3, 1fr);
+}
+.my-files {
+  display: grid;
+  gap: 0.7rem;
+}
+.my-files-head {
+  display: grid;
+  gap: 0.6rem;
+}
+.file-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: none;
+}
+.empty-files {
+  text-align: center;
+  padding: 1rem 0;
+}
+.ep-main input {
+  flex: 1;
+  min-width: 0;
+}
