@@ -8,6 +8,7 @@ import { resumePosition } from "@/lib/tafsir/progress";
 import { clock, ddmmyyyy } from "@/lib/tafsir/format";
 import { normalize } from "@/lib/search/normalize";
 import { useLang, useMounted } from "@/lib/ui";
+import { whyNotPlayable } from "@/lib/umm/sniff";
 
 /** «ملفاتي»: Umm Kulthum recordings added from this device, stored and played locally (free, private). */
 export function MyFiles() {
@@ -35,7 +36,7 @@ export function MyFiles() {
     const st = await myFilesStation();
     if (!st) return;
     const i = st.streams.findIndex((s) => s.id === `local/${fileId}`);
-    if (i >= 0) playVersion(st, i, { fromStart });
+    playVersion(st, Math.max(0, i), { fromStart: fromStart || i < 0 });
   };
 
   return (
@@ -108,7 +109,7 @@ export function MyFiles() {
           const resumeAt = mounted ? resumePosition(ummStore.get(), eid) : 0;
           return (
             <li key={f.id} className={`episode ${current ? "is-current" : ""} ${pr?.done ? "is-done" : ""}`}>
-              <button className="ep-play" onClick={() => (current ? player().toggle() : void play(f.id))} aria-label={playing ? (ar ? "إيقاف مؤقت" : "Pause") : `${ar ? "تشغيل" : "Play"} ${f.title}`}>
+              <button className="ep-play" disabled={f.playable === false} onClick={() => (current ? player().toggle() : void play(f.id))} aria-label={playing ? (ar ? "إيقاف مؤقت" : "Pause") : `${ar ? "تشغيل" : "Play"} ${f.title}`}>
                 <Icon name={playing ? "pause" : "play"} size={22} />
               </button>
               <div className="ep-main">
@@ -132,9 +133,13 @@ export function MyFiles() {
                   {dur ? " · " : ""}
                   <bdi dir="ltr">{fmtSize(f.size)}</bdi>
                   {" · "}
-                  <bdi dir="ltr">{(f.name.split(".").pop() ?? "").toUpperCase()}</bdi>
+                  <bdi dir="ltr">{f.format ?? (f.name.split(".").pop() ?? "").toUpperCase()}</bdi>
+                  {f.format && f.playable !== false && !f.name.toLowerCase().endsWith(`.${f.format.toLowerCase()}`) && f.format !== "AAC" && (
+                    <span className="muted">{ar ? ` (اسم الملف .${f.name.split(".").pop()})` : ` (named .${f.name.split(".").pop()})`}</span>
+                  )}
                 </span>
                 <span className="ep-state">
+                  {f.playable === false && <span className="err">{whyNotPlayable({ format: f.format ?? "Unknown", mime: "", playable: false })}</span>}
                   {pr?.done ? (
                     <span className="ok">{ar ? "✓ استمعت إليه كاملًا" : "✓ Heard in full"}</span>
                   ) : resumeAt > 0 && !current ? (
@@ -144,7 +149,13 @@ export function MyFiles() {
                       {pr?.at ? <> · <bdi dir="ltr">{ddmmyyyy(pr.at)}</bdi></> : null}
                     </span>
                   ) : null}
-                  {current && snap.status === "unavailable" && <span className="err">{ar ? "تعذّر تشغيل هذا الملف (صيغة غير مدعومة في هذا المتصفح؟)" : "Can't play this file here."}</span>}
+                  {current && snap.status === "unavailable" && f.playable !== false && (
+                    <span className="err">
+                      {ar
+                        ? `تعذّر تشغيل هذا الملف (${f.format ?? "?"}) — قد يكون تالفًا أو غير مكتمل التحميل. جرّبه في برنامج VLC.`
+                        : "This file couldn't be played; it may be damaged or incomplete."}
+                    </span>
+                  )}
                 </span>
                 {(pct > 0 || current) && (
                   <span className="ep-bar" aria-hidden>

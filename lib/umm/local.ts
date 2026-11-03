@@ -2,6 +2,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import type { PlayableStation } from "../types";
 import { identify } from "./parse";
+import { sniff } from "./sniff";
 
 /**
  * «ملفاتي»: audio files the user adds from their own device (MP3, M4A/AAC, FLAC, WAV…).
@@ -17,6 +18,9 @@ export interface LocalFile {
   type: string;
   duration: number; // seconds (0 = unknown)
   addedAt: number;
+  /** Real format from the file's content (e.g. a RealAudio file named .mp3). */
+  format?: string;
+  playable?: boolean;
 }
 
 interface Row extends LocalFile {
@@ -64,6 +68,13 @@ export async function refreshFiles() {
   if (st.status === "idle") set({ status: "loading" });
   try {
     const rows = await tx<Row[]>("readonly", (s) => s.getAll() as IDBRequest<Row[]>);
+    // Files added before format detection existed: detect now (reads only the first bytes).
+    for (const r of rows)
+      if (!r.format) {
+        const x = await sniff(r.blob);
+        r.format = x.format;
+        r.playable = x.playable;
+      }
     const files = rows.map(({ blob: _b, ...f }) => f).sort((a, b) => a.title.localeCompare(b.title, "ar"));
     set({ status: "ready", files });
   } catch {
@@ -126,15 +137,20 @@ export async function addFiles(list: FileList | File[]): Promise<{ added: number
       continue;
     }
     set({ busy: `${i + 1}/${files.length}` });
+    const x = await sniff(f);
+    // Store with the true MIME type: Safari/Firefox refuse blob audio whose type is wrong or empty.
+    const blob = x.playable ? new Blob([f], { type: x.mime }) : f;
     const row: Row = {
       id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       name: f.name,
       title: titleFor(f.name),
       size: f.size,
-      type: f.type || "audio/mpeg",
-      duration: await durationOf(f),
+      type: x.playable ? x.mime : f.type || x.mime,
+      duration: x.playable ? await durationOf(blob) : 0,
       addedAt: Date.now(),
-      blob: f,
+      format: x.format,
+      playable: x.playable,
+      blob,
     };
     try {
       await tx("readwrite", (s) => s.put(row));
@@ -169,7 +185,14 @@ const urls = new Map<string, string>();
 
 /** Player station over all my files (object URLs point at the stored files; nothing is downloaded). */
 export async function myFilesStation(): Promise<PlayableStation | null> {
-  const rows = await tx<Row[]>("readonly", (s) => s.getAll() as IDBRequest<Row[]>);
+  const all = await tx<Row[]>("readonly", (s) => s.getAll() as IDBRequest<Row[]>);
+  const rows: Row[] = [];
+  for (const r of all) {
+    const x = await sniff(r.blob);
+    if (!x.playable) continue; // never queue a file the browser can't play
+    // Older rows may carry an empty/wrong type: re-label from the content.
+    rows.push(r.blob.type === x.mime ? r : { ...r, blob: new Blob([r.blob], { type: x.mime }) });
+  }
   if (!rows.length) return null;
   rows.sort((a, b) => a.title.localeCompare(b.title, "ar"));
   return {

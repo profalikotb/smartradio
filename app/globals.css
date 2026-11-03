@@ -2352,3 +2352,7 @@ details.tech[open] > summary::before {
   flex: 1;
   min-width: 0;
 }
+.ep-play:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
