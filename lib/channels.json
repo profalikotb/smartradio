@@ -459,5 +459,61 @@
     "category": null,
     "show": true,
     "section": false
+  },
+  {
+    "no": 28,
+    "name": "النيل للأخبار – راديو 102.7",
+    "nameEn": null,
+    "url": null,
+    "urls": [],
+    "format": null,
+    "result": "No direct audio stream published (official live page embeds the TV channel on YouTube)",
+    "checkedOn": "26/11/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://www.nile.eg/",
+    "notes": "Nile News radio, FM 102.7 since 01/01/2025 (nile.eg). No verified direct audio link yet: in the app open the station → «البحث عن بث» to pick a directory listing, or paste a direct link here (column C) when one is published.",
+    "frequency": null,
+    "category": null,
+    "show": true,
+    "section": false
+  },
+  {
+    "no": 29,
+    "name": "راديو مصر",
+    "nameEn": null,
+    "url": "https://live.radiomasr.net/RADIOMASR",
+    "urls": [
+      "https://live.radiomasr.net/RADIOMASR"
+    ],
+    "format": "Stream",
+    "result": "Published on source page / not checked",
+    "checkedOn": "27/11/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://radio.3nwaan.com/2022/05/Radio-Masr-887fm-live.html",
+    "notes": "Radio Masr, FM 88.7 (Cairo). Stream on the station's own domain radiomasr.net (official site per Streema/OnlineRadioBox). If it stops: station page → «رابط البث» → تغيير الرابط.",
+    "frequency": null,
+    "category": null,
+    "show": true,
+    "section": false
+  },
+  {
+    "no": 30,
+    "name": "إذاعة عبد الحليم حافظ",
+    "nameEn": null,
+    "url": null,
+    "urls": [],
+    "format": null,
+    "result": "No fixed link: found in the radio directory at play time",
+    "checkedOn": "27/11/2026",
+    "favourite": false,
+    "core": null,
+    "source": "https://zeno.fm/radio/abdel-halim-hafez/",
+    "notes": "Live 24/7 Abdel Halim Hafez radio for the «عبد الحليم حافظ» section (Show = Section: not listed with radio stations). The app picks the best Abdel Halim listing from the radio directory automatically; paste a URL in column C to pin one.",
+    "frequency": null,
+    "category": null,
+    "show": true,
+    "section": true
   }
 ]

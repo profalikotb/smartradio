@@ -59,6 +59,8 @@ export interface IaFile {
   format?: string;
   title?: string;
   length?: string;
+  /** For a derivative (e.g. "VBR MP3"), the original file it was made from. */
+  original?: string;
 }
 
 /** Latin transliterations seen in the archive items → Arabic song titles. */
@@ -111,6 +113,89 @@ const TRANSLIT: [string, string[]][] = [
   ["يا صباح الخير", ["ya sabah el kheir"]],
 ];
 
+/** Abdel Halim Hafez: known titles (help split «اهواك حفل أضواء المدينة 1957» into song + concert). */
+const HALIM_TITLES: [string, string[]][] = [
+  ["قارئة الفنجان", ["qareat el fengan", "kariat el fingan", "qariat al finjan"]],
+  ["أي دمعة حزن لا", ["ay damet hozn la", "ay dam3et 7ozn la"]],
+  ["الوطن الأكبر", ["el watan el akbar", "al watan al akbar"]],
+  ["أسمر يا أسمراني", ["asmar ya asmarani"]],
+  ["زي الهوا", ["zay el hawa", "zay al hawa"]],
+  ["سواح", ["sawah", "sawwah"]],
+  ["موعود", ["mawood", "maw3oud", "mawoud"]],
+  ["جانا الهوى", ["gana el hawa", "gana al hawa"]],
+  ["على حسب وداد قلبي", ["ala hesb wedad", "3ala 7asab wedad"]],
+  ["أهواك", ["ahwak", "ahwaak"]],
+  ["صافيني مرة", ["safini marra", "safeeni mara"]],
+  ["بتلوموني ليه", ["betlomoni leh", "betloumouni leh"]],
+  ["الهوى هوايا", ["el hawa hawaya"]],
+  ["أول مرة تحب يا قلبي", ["awel mara t7eb ya alby", "awel marra tehib ya albi"]],
+  ["بيني وبينك إيه", ["beny w beink eh"]],
+  ["كفاية نورك عليا", ["kefaya nourek alaya"]],
+  ["يا مولعين بالسهر", ["ya mewal3een bel sahar"]],
+  ["الماء والخضرة", ["el maa wel khodra"]],
+  ["في يوم في شهر في سنة", ["fi yom fi shahr fi sana"]],
+  ["فاتت جنبنا", ["fatet ganbena", "fatet gambena"]],
+  ["رسالة من تحت الماء", ["resala men taht el maa", "risala min taht al maa"]],
+  ["مداح القمر", ["maddah el amar", "madah el amar"]],
+  ["حاول تفتكرني", ["hawel tefteker ni", "hawel teftekerni"]],
+  ["نبتدي منين الحكاية", ["nebtedi menein el hekaya"]],
+  ["لا تكذبي", ["la takzeby", "la takdhibi"]],
+  ["توبة", ["toba", "tooba"]],
+  ["بتقولي بكره", ["betolly bokra"]],
+  ["جبار", ["gabbar", "gabar"]],
+  ["حبك نار", ["habak nar", "hobak nar"]],
+  ["خسارة خسارة", ["khosara khosara"]],
+  ["قولي حاجة", ["olly haga", "oulli haga"]],
+  ["وحياة قلبي وأفراحه", ["we hayat alby", "wehyat albi"]],
+  ["بالأحضان", ["bel ahdan"]],
+  ["الحلوة", ["el helwa"]],
+  ["على قد الشوق", ["ala ad el shoq", "ala add el shouk"]],
+  ["ضحك ولعب وجد وحب", ["dehk we leab"]],
+  ["نار يا حبيبي نار", ["nar ya habibi nar"]],
+  ["بحلم بيك", ["bahlam bik"]],
+  ["عدى النهار", ["adda el nahar", "ada el nahar"]],
+  ["المسيح", ["el maseeh", "al masih"]],
+  ["صورة", ["soura", "sura"]],
+  ["تخونوه", ["tekhonoh", "takhounou"]],
+  ["ظلموه", ["zalamooh", "zalamouh"]],
+  ["أنا لك على طول", ["ana lak ala tool"]],
+  ["في يوم من الأيام", ["fi yom men el ayam"]],
+  ["ليه تشغل بالك", ["leh teshghel balak"]],
+  ["يا خلي القلب", ["ya khaly el alb"]],
+  ["تخونوه", ["takhonoh"]],
+  ["الليل", ["el leil", "al layl"]],
+];
+
+/** How one artist's archive files are read: titles, name prefixes to strip, files that are not songs. */
+export interface ParseOpts {
+  translit: [string, string[]][];
+  stripPrefix: RegExp;
+  exclude: RegExp;
+}
+export const UMM_PARSE: ParseOpts = { translit: TRANSLIT, stripPrefix: /^أم كلثوم\s*[-–—]\s*/, exclude: /qur'?an|quran|قرآن|قران/i };
+export const HALIM_PARSE: ParseOpts = {
+  translit: HALIM_TITLES,
+  stripPrefix: /^(?:عبد\s*ال?حليم\s*حافظ|بد\s*الحليم\s*حافظ|العندليب|حليم|حافظ)\s*[.\-–—_:]*\s*/,
+  // Interviews, talks and programmes are not songs.
+  exclude: /حوار|برنامج|لقاء|يحكى|يحكي|يتعالج|يتعالح|مقابلة|حديث مع|حديث عن|interview|adil imam|qur'?an|قرآن/i,
+};
+
+interface Compiled {
+  bySkeleton: Map<string, string>;
+  known: string[];
+}
+const compiled = new WeakMap<ParseOpts, Compiled>();
+function compile(o: ParseOpts): Compiled {
+  let c = compiled.get(o);
+  if (!c) {
+    const bySkeleton = new Map<string, string>();
+    for (const [ar, variants] of o.translit) for (const v of variants) bySkeleton.set(skeleton(v), ar);
+    const known = [...new Set(o.translit.map(([ar]) => ar))].sort((a, b) => normalize(b).length - normalize(a).length);
+    compiled.set(o, (c = { bySkeleton, known }));
+  }
+  return c;
+}
+
 /** Consonant skeleton of a Latin transliteration: tolerant of vowel and spacing variants. */
 export function skeleton(latin: string): string {
   return latin
@@ -120,9 +205,6 @@ export function skeleton(latin: string): string {
     .replace(/(.)\1+/g, "$1");
 }
 
-const BY_SKELETON = new Map<string, string>();
-for (const [ar, variants] of TRANSLIT) for (const v of variants) BY_SKELETON.set(skeleton(v), ar);
-const KNOWN_AR = TRANSLIT.map(([ar]) => ar).sort((a, b) => normalize(b).length - normalize(a).length);
 
 const isArabic = (s: string) => /[؀-ۿ]{2}/.test(s);
 const MONTHS = /(يناير|جانفي|فبراير|فيفري|مارس|أبريل|ابريل|أفريل|افريل|مايو|ماي|يونيو|جوان|يوليو|جويلية|أغسطس|اغسطس|أوت|سبتمبر|أكتوبر|اكتوبر|نوفمبر|ديسمبر)/;
@@ -135,10 +217,10 @@ export function songKey(title: string): string {
 }
 
 /** Split an Arabic name like «أراك عصي الدمع 25 مارس 1965 الأزبكية» into song + version detail. */
-export function splitArabic(name: string): { song: string; detail: string } {
+export function splitArabic(name: string, opts: ParseOpts = UMM_PARSE): { song: string; detail: string } {
   const clean = name.replace(/\s+/g, " ").trim();
   const n = normalize(clean);
-  for (const ar of KNOWN_AR) {
+  for (const ar of compile(opts).known) {
     const k = normalize(ar);
     if (n.startsWith(k)) {
       // Cut the original string after the same number of words.
@@ -160,6 +242,9 @@ function cleanBase(file: string): string {
     .replace(/^\s*\d{1,3}\s*[.\-_)]\s*/, "")
     .replace(/^(studio|ستوديو|استوديو)\s*[-_ ]\s*/i, "")
     .replace(/[_]+/g, " ")
+    // «الهوى هوايا.تسجيل حفلة» → «الهوى هوايا - تسجيل حفلة»
+    .replace(/(?<=[\u0600-\u06FF])\.+(?=[\u0600-\u06FF\s])/g, " - ")
+    .replace(/^[-–—.\s]+|[-–—.\s]+$/g, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -171,27 +256,28 @@ export function parseSeconds(len?: string): number {
 }
 
 /** Title for one file: folder (Arabic) → distinctive Arabic metadata title → Arabic file name → known transliteration → Latin. */
-export function identify(f: IaFile, titleCounts: Map<string, number>): { song: string; arabic: boolean; detail: string } | null {
-  const base = cleanBase(f.name);
-  if (/qur'?an|quran|قرآن|قران/i.test(base) || /qur'?an|قرآن/i.test(f.title ?? "")) return null; // not a song
+export function identify(f: IaFile, titleCounts: Map<string, number>, opts: ParseOpts = UMM_PARSE): { song: string; arabic: boolean; detail: string } | null {
+  const c = compile(opts);
+  const base = cleanBase(f.name).replace(opts.stripPrefix, "").replace(opts.stripPrefix, "").trim();
+  if (opts.exclude.test(base) || opts.exclude.test(f.title ?? "")) return null; // not a song
   const folder = f.name.includes("/") ? f.name.split("/").slice(-2, -1)[0]!.trim() : "";
   if (folder && isArabic(folder)) {
-    const s = splitArabic(folder);
-    const rest = isArabic(base) ? splitArabic(base).detail || base.replace(folder, "").trim() : "";
+    const s = splitArabic(folder.replace(opts.stripPrefix, ""), opts);
+    const rest = isArabic(base) ? splitArabic(base, opts).detail || base.replace(folder, "").trim() : "";
     return { song: s.song, arabic: true, detail: rest };
   }
   const meta = f.title?.trim();
   if (meta && isArabic(meta) && (titleCounts.get(meta) ?? 0) <= 2) {
-    const s = splitArabic(meta.replace(/^أم كلثوم\s*[-–—]\s*/, "").replace(/\(.*?\)/g, "").trim());
+    const s = splitArabic(meta.replace(opts.stripPrefix, "").replace(/\(.*?\)/g, "").trim(), opts);
     return { song: s.song, arabic: true, detail: s.detail };
   }
   if (isArabic(base)) {
-    const s = splitArabic(base.replace(/^أم كلثوم\s*[-–—]\s*/, ""));
+    const s = splitArabic(base, opts);
     return { song: s.song, arabic: true, detail: s.detail };
   }
   const versionNo = /\s*(\d+)\s*$/.exec(base)?.[1];
   const latin = base.replace(/\s*\d+\s*$/, "").trim();
-  const ar = BY_SKELETON.get(skeleton(latin));
+  const ar = c.bySkeleton.get(skeleton(latin));
   if (ar) return { song: ar, arabic: true, detail: versionNo ? `نسخة ${versionNo}` : "" };
   if (!latin) return null;
   return { song: latin.replace(/\b\w/g, (c) => c.toUpperCase()), arabic: false, detail: versionNo ? `نسخة ${versionNo}` : "" };
@@ -205,18 +291,37 @@ function versionLabel(src: UmmSource, detail: string): string {
   return src.kind === "studio" ? "تسجيل استوديو" : src.kind === "concert" ? "تسجيل حفلة" : "تسجيل";
 }
 
-export function buildLibrary(input: { source: UmmSource; files: IaFile[] | null }[], now = new Date()): Library {
+/**
+ * Playable audio of an item: original MP3s, and for originals in other formats (WMA, OGG, WAV…)
+ * the archive's own MP3 derivative of that file (plays on iPhone too).
+ */
+export function playableFiles(files: IaFile[]): IaFile[] {
+  const out: IaFile[] = [];
+  const audioExt = /\.(mp3|ogg|wma|wav|flac|m4a|aac|opus)$/i;
+  for (const o of files) {
+    if (o.source !== "original" || !audioExt.test(o.name)) continue;
+    if (/\.mp3$/i.test(o.name)) {
+      out.push(o);
+      continue;
+    }
+    const d = files.find((x) => x.source === "derivative" && x.original === o.name && /\.mp3$/i.test(x.name) && /mp3/i.test(x.format ?? ""));
+    if (d) out.push({ ...d, title: d.title ?? o.title, length: d.length ?? o.length });
+  }
+  return out;
+}
+
+export function buildLibrary(input: { source: UmmSource; files: IaFile[] | null }[], now = new Date(), opts: ParseOpts = UMM_PARSE): Library {
   const songs = new Map<string, Song>();
   const sources: Library["sources"] = [];
   for (const { source, files } of input) {
-    const audio = (files ?? []).filter((f) => f.source === "original" && /\.mp3$/i.test(f.name) && /mp3/i.test(f.format ?? "mp3"));
+    const audio = playableFiles(files ?? []);
     sources.push({ key: source.key, name: source.name, url: source.url, ok: !!files, files: audio.length });
     const counts = new Map<string, number>();
     for (const f of audio) if (f.title) counts.set(f.title.trim(), (counts.get(f.title.trim()) ?? 0) + 1);
     for (const f of audio) {
       const seconds = parseSeconds(f.length);
       if (seconds && seconds < 60) continue; // fragments / intros
-      const idn = identify(f, counts);
+      const idn = identify(f, counts, opts);
       if (!idn) continue;
       const key = songKey(idn.song);
       let song = songs.get(key);
@@ -243,7 +348,8 @@ export function buildLibrary(input: { source: UmmSource; files: IaFile[] | null 
   const list = [...songs.values()];
   for (const s of list) {
     // Studio first, then concerts by year, then the rest.
-    const rank = (v: Version) => (v.label === "تسجيل استوديو" ? 0 : v.year ? 1 : 2);
+    // Studio first, then a plain recording (no concert details — usually the original), then concerts by year.
+    const rank = (v: Version) => (v.label === "تسجيل استوديو" ? 0 : v.label === "تسجيل" ? 0.5 : v.year ? 1 : 2);
     s.versions.sort((a, b) => rank(a) - rank(b) || (a.year ?? 0) - (b.year ?? 0) || coll.compare(a.label, b.label));
     for (const v of s.versions) v.title = `${s.title} — ${v.label}`;
   }
@@ -251,15 +357,20 @@ export function buildLibrary(input: { source: UmmSource; files: IaFile[] | null 
   return { generatedAt: now.toISOString(), sources, songs: list };
 }
 
-/** Display names for the player ids "umm:all" / "umm:s:<key>" (song names registered at runtime). */
+/** Display names for the player ids "<prefix>all" / "<prefix>my" / "<prefix>s:<key>" (songs registered at runtime). */
 const names = new Map<string, string>();
-export function registerSongNames(lib: Library) {
-  for (const s of lib.songs) names.set(s.key, s.title);
+const PREFIX_NAMES: Record<string, [string, string]> = { "umm:": ["أم كلثوم", "Umm Kulthum"], "halim:": ["عبد الحليم حافظ", "Abdel Halim Hafez"] };
+export function registerSongNames(lib: Library, prefix = "umm:") {
+  for (const s of lib.songs) names.set(prefix + s.key, s.title);
 }
 export function ummName(id: string): { nameAr: string; nameEn: string } | null {
-  if (!id.startsWith("umm:")) return null;
-  if (id === "umm:all") return { nameAr: "أم كلثوم – الاستماع المتصل", nameEn: "Umm Kulthum — continuous" };
-  if (id === "umm:my") return { nameAr: "أم كلثوم – ملفاتي", nameEn: "Umm Kulthum — my files" };
-  const t = names.get(id.slice(6));
-  return { nameAr: t ? `أم كلثوم – ${t}` : "أم كلثوم", nameEn: t ? `Umm Kulthum — ${t}` : "Umm Kulthum" };
+  const prefix = Object.keys(PREFIX_NAMES).find((p) => id.startsWith(p));
+  if (!prefix) return null;
+  const [ar, en] = PREFIX_NAMES[prefix]!;
+  const rest = id.slice(prefix.length);
+  if (rest === "all") return { nameAr: `${ar} – الاستماع المتصل`, nameEn: `${en} — continuous` };
+  if (rest === "my") return { nameAr: `${ar} – ملفاتي`, nameEn: `${en} — my files` };
+  const t = names.get(prefix + rest.slice(2));
+  return { nameAr: t ? `${ar} – ${t}` : ar, nameEn: t ? `${en} — ${t}` : en };
 }
+export const artistName = ummName;

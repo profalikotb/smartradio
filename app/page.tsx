@@ -4,8 +4,8 @@ import { Icon } from "@/components/Icon";
 import { AddStationForm } from "@/components/AddStation";
 import { useState } from "react";
 import { TafsirContinue } from "@/components/TafsirContinue";
-import { UmmContinue } from "@/components/UmmContinue";
-import { continueUmm, getLibrary, ummStore, useLibrary } from "@/lib/umm/client";
+import { ArtistContinue } from "@/components/artist/ArtistContinue";
+import { CLIENTS } from "@/lib/umm/client";
 import { continueLast, getManifest, useManifest } from "@/lib/tafsir/client";
 import { useProgress } from "@/lib/tafsir/progress";
 import { CoreButton, StationRow } from "@/components/Stations";
@@ -32,8 +32,21 @@ export default function Home() {
   const core = useAppState((s) => s.core);
   const ctl = useController();
   const tafsirLast = useProgress((p) => p.last);
-  const ummLast = ummStore.use((p) => p.last);
-  useLibrary(); // warm the Umm Kulthum library too
+  const ummLast = CLIENTS.umm.store.use((p) => p.last);
+  const halimLast = CLIENTS.halim.store.use((p) => p.last);
+  CLIENTS.umm.useLibrary(); // warm the singer libraries so "continue" works in one tap
+  CLIENTS.halim.useLibrary();
+  // The most recent recorded listening across Tafsir and the singer sections.
+  const latest = (
+    [
+      ["tafsir", tafsirLast?.at ?? 0],
+      ["umm", ummLast?.at ?? 0],
+      ["halim", halimLast?.at ?? 0],
+    ] as const
+  )
+    .filter(([, at]) => at > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k]) => k);
   useManifest(); // warm the Tafsir index so "continue" works in one tap
 
   const otherPinned = pinned.filter((id) => !core.includes(id));
@@ -63,21 +76,25 @@ export default function Home() {
           <span className="dash-ico" aria-hidden>🎵</span>
           <span>{lang === "ar" ? "أم كلثوم" : "Umm Kulthum"}</span>
         </Link>
+        <Link href="/halim" className="dash-btn is-halim">
+          <span className="dash-ico" aria-hidden>🎙️</span>
+          <span>{lang === "ar" ? "عبد الحليم حافظ" : "Abdel Halim"}</span>
+        </Link>
         <Link href="/favorites" className="dash-btn">
           <span className="dash-ico" aria-hidden>❤️</span>
           <span>{lang === "ar" ? "المفضلة" : "Favorites"}</span>
         </Link>
         <button
           className="dash-btn dash-wide"
-          disabled={!mounted || (!tafsirLast && !ummLast && !lastView)}
+          disabled={!mounted || (!latest.length && !lastView)}
           onClick={() => {
-            // Most recent of: Tafsir, Umm Kulthum, then the last radio station.
-            const m = getManifest();
-            const lib = getLibrary();
-            const ummFirst = (ummLast?.at ?? 0) > (tafsirLast?.at ?? 0);
-            if (ummFirst && continueUmm(lib)) return;
-            if (tafsirLast && m && continueLast(m)) return;
-            if (ummLast && continueUmm(lib)) return;
+            // Most recent of Tafsir / Umm Kulthum / Abdel Halim, then the last radio station.
+            for (const k of latest) {
+              if (k === "tafsir") {
+                const m = getManifest();
+                if (m && continueLast(m)) return;
+              } else if (CLIENTS[k].continueLast(CLIENTS[k].getLibrary())) return;
+            }
             if (lastView) player().playById(lastView.id);
           }}
         >
@@ -86,7 +103,7 @@ export default function Home() {
         </button>
       </nav>
 
-      {(ummLast?.at ?? 0) > (tafsirLast?.at ?? 0) ? <UmmContinue compact /> : <TafsirContinue compact />}
+      {latest[0] === "umm" || latest[0] === "halim" ? <ArtistContinue slug={latest[0]} compact /> : <TafsirContinue compact />}
 
       {showResume && lastView && (
         <button className="resume-card" onClick={() => player().playById(lastView.id)}>

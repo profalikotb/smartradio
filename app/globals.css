@@ -2356,3 +2356,28 @@ details.tech[open] > summary::before {
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* ===================== Abdel Halim Hafez ===================== */
+.dash-btn.is-halim {
+  border-color: color-mix(in srgb, var(--emerald) 45%, var(--line));
+  background: linear-gradient(160deg, var(--surface), var(--emerald-soft));
+}
+.artist-halim .umm-mark {
+  background: var(--emerald-soft);
+}
+.artist-halim .tafsir-sub {
+  color: var(--emerald);
+}
+.continue-card.artist-halim {
+  border-color: color-mix(in srgb, var(--emerald) 45%, var(--line));
+  background: linear-gradient(160deg, var(--surface), var(--emerald-soft));
+}
+.continue-card.artist-halim .cc-kicker {
+  color: var(--emerald);
+}
+.continue-card.artist-halim .cc-bar > span {
+  background: var(--emerald);
+}
+.dash .dash-wide {
+  grid-column: 1 / -1;
+}

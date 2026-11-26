@@ -10,6 +10,14 @@ import { fmt, fmtTime, type Dict } from "@/lib/i18n";
 import { useLang, useT, useTicker } from "@/lib/ui";
 import { displayName, viewOf } from "@/lib/stations";
 import { MiniProgress, OnDemandPanel } from "./OnDemand";
+import { artistOf } from "@/lib/umm/artists";
+
+/** Player id of a singer section → its page (song, continuous mode, or «ملفاتي»). */
+function artistLink(id: string): string {
+  const a = artistOf(id)!;
+  const rest = id.slice(a.prefix.length);
+  return rest === "all" ? `${a.route}?mode=radio` : rest === "my" ? `${a.route}?mode=mine` : `${a.route}/${rest.slice(2)}`;
+}
 import { toggleFavorite } from "@/lib/state";
 
 export type UiStatus = PlayerSnapshot["status"] | "resolving" | "resolve-failed";
@@ -191,8 +199,8 @@ function PlayerSheet({ onClose }: { onClose: () => void }) {
         <VolumeControl />
         <SleepTimer />
         {!onDemand && <ConnectionPanel />}
-        {id.startsWith("umm:") ? (
-          <Link href={id === "umm:all" ? "/umm?mode=radio" : id === "umm:my" ? "/umm?mode=mine" : `/umm/${id.slice(6)}`} className="btn btn-block" onClick={onClose}>
+        {artistOf(id) ? (
+          <Link href={artistLink(id)} className="btn btn-block" onClick={onClose}>
             <Icon name="music" size={18} /> {lang === "ar" ? "تسجيلات الأغنية" : "Song versions"}
           </Link>
         ) : id.startsWith("tafsir:") ? (

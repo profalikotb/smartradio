@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useSyncExternalStore } from "react";
 import type { PlayableStation } from "../types";
-import { identify } from "./parse";
+import { HALIM_PARSE, identify, UMM_PARSE } from "./parse";
 import { sniff } from "./sniff";
 
 /**
@@ -21,6 +21,8 @@ export interface LocalFile {
   /** Real format from the file's content (e.g. a RealAudio file named .mp3). */
   format?: string;
   playable?: boolean;
+  /** Which singer section the file belongs to (files from before this field = Umm Kulthum). */
+  artist?: "umm" | "halim";
 }
 
 interface Row extends LocalFile {
@@ -28,6 +30,9 @@ interface Row extends LocalFile {
 }
 
 export const MY_FILES_ID = "umm:my";
+const NAMES = { umm: ["أم كلثوم", "Umm Kulthum"], halim: ["عبد الحليم حافظ", "Abdel Halim Hafez"] } as const;
+export type FilesArtist = keyof typeof NAMES;
+export const myFilesId = (a: FilesArtist) => `${a}:my`;
 const DB = "smart-radio-files";
 const STORE = "files";
 
@@ -75,7 +80,7 @@ export async function refreshFiles() {
         r.format = x.format;
         r.playable = x.playable;
       }
-    const files = rows.map(({ blob: _b, ...f }) => f).sort((a, b) => a.title.localeCompare(b.title, "ar"));
+    const files = rows.map(({ blob: _b, ...f }) => ({ ...f, artist: f.artist ?? ("umm" as const) })).sort((a, b) => a.title.localeCompare(b.title, "ar"));
     set({ status: "ready", files });
   } catch {
     set({ status: "error", error: "storage" });
@@ -95,8 +100,8 @@ export function useMyFiles(): FilesState {
 }
 
 /** Recognise the song (same rules as the online library); otherwise the file name. */
-export function titleFor(fileName: string): string {
-  const id = identify({ name: fileName.replace(/\.[a-z0-9]{2,5}$/i, ".mp3"), source: "original" }, new Map());
+export function titleFor(fileName: string, artist: FilesArtist = "umm"): string {
+  const id = identify({ name: fileName.replace(/\.[a-z0-9]{2,5}$/i, ".mp3"), source: "original" }, new Map(), artist === "halim" ? HALIM_PARSE : UMM_PARSE);
   const base = fileName.replace(/\.[a-z0-9]{2,5}$/i, "").replace(/[_]+/g, " ").trim();
   if (!id || !id.arabic) return base; // unrecognised: keep the user's own file name
   return id.detail ? `${id.song} — ${id.detail}` : id.song;
@@ -121,7 +126,7 @@ function durationOf(blob: Blob): Promise<number> {
 const AUDIO_EXT = /\.(mp3|m4a|aac|flac|wav|ogg|oga|opus|alac|aif|aiff)$/i;
 
 /** Add files picked by the user. Returns how many were added / skipped (not audio). */
-export async function addFiles(list: FileList | File[]): Promise<{ added: number; skipped: number }> {
+export async function addFiles(list: FileList | File[], artist: FilesArtist = "umm"): Promise<{ added: number; skipped: number }> {
   const files = [...list];
   let added = 0;
   let skipped = 0;
@@ -143,11 +148,12 @@ export async function addFiles(list: FileList | File[]): Promise<{ added: number
     const row: Row = {
       id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       name: f.name,
-      title: titleFor(f.name),
+      title: titleFor(f.name, artist),
       size: f.size,
       type: x.playable ? x.mime : f.type || x.mime,
       duration: x.playable ? await durationOf(blob) : 0,
       addedAt: Date.now(),
+      artist,
       format: x.format,
       playable: x.playable,
       blob,
@@ -184,10 +190,11 @@ export async function renameFile(id: string, title: string) {
 const urls = new Map<string, string>();
 
 /** Player station over all my files (object URLs point at the stored files; nothing is downloaded). */
-export async function myFilesStation(): Promise<PlayableStation | null> {
+export async function myFilesStation(artist: FilesArtist = "umm"): Promise<PlayableStation | null> {
   const all = await tx<Row[]>("readonly", (s) => s.getAll() as IDBRequest<Row[]>);
   const rows: Row[] = [];
   for (const r of all) {
+    if ((r.artist ?? "umm") !== artist) continue;
     const x = await sniff(r.blob);
     if (!x.playable) continue; // never queue a file the browser can't play
     // Older rows may carry an empty/wrong type: re-label from the content.
@@ -196,9 +203,9 @@ export async function myFilesStation(): Promise<PlayableStation | null> {
   if (!rows.length) return null;
   rows.sort((a, b) => a.title.localeCompare(b.title, "ar"));
   return {
-    id: MY_FILES_ID,
-    nameAr: "أم كلثوم – ملفاتي",
-    nameEn: "Umm Kulthum — my files",
+    id: myFilesId(artist),
+    nameAr: `${NAMES[artist][0]} – ملفاتي`,
+    nameEn: `${NAMES[artist][1]} — my files`,
     country: "EG",
     category: "music",
     identity: "user-confirmed",

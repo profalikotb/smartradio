@@ -2,20 +2,24 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icon";
 import { player, usePlayer } from "@/lib/player/controller";
-import { playVersion, ummStore } from "@/lib/umm/client";
-import { addFiles, fmtSize, MY_FILES_ID, myFilesStation, removeFile, renameFile, storageUse, useMyFiles } from "@/lib/umm/local";
+import { clientFor } from "@/lib/umm/client";
+import type { ArtistSlug } from "@/lib/umm/artists";
+import { addFiles, fmtSize, myFilesStation, removeFile, renameFile, storageUse, useMyFiles } from "@/lib/umm/local";
 import { resumePosition } from "@/lib/tafsir/progress";
 import { clock, ddmmyyyy } from "@/lib/tafsir/format";
 import { normalize } from "@/lib/search/normalize";
 import { useLang, useMounted } from "@/lib/ui";
 import { whyNotPlayable } from "@/lib/umm/sniff";
 
-/** «ملفاتي»: Umm Kulthum recordings added from this device, stored and played locally (free, private). */
-export function MyFiles() {
+/** «ملفاتي»: a singer's recordings added from this device, stored and played locally (free, private). */
+export function MyFiles({ slug = "umm" }: { slug?: ArtistSlug }) {
+  const c = clientFor(slug);
+  const A = c.artist;
   const ar = useLang() === "ar";
   const mounted = useMounted();
-  const { status, files, busy, error } = useMyFiles();
-  const progress = ummStore.use((p) => p);
+  const { status, files: allFiles, busy, error } = useMyFiles();
+  const files = allFiles.filter((f) => (f.artist ?? "umm") === slug);
+  const progress = c.store.use((p) => p);
   const snap = usePlayer();
   const input = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState("");
@@ -27,16 +31,16 @@ export function MyFiles() {
     void storageUse().then(setUse);
   }, [files.length]);
 
-  const here = snap.station?.id === MY_FILES_ID;
+  const here = snap.station?.id === c.myId;
   const nq = normalize(q.trim());
   const shown = files.filter((f) => !nq || normalize(f.title).includes(nq) || normalize(f.name).includes(nq));
 
   const play = async (fileId: string, fromStart = false) => {
     player().engine.unlock(); // inside the tap (iPhone), before the async read
-    const st = await myFilesStation();
+    const st = await myFilesStation(slug);
     if (!st) return;
     const i = st.streams.findIndex((s) => s.id === `local/${fileId}`);
-    playVersion(st, Math.max(0, i), { fromStart: fromStart || i < 0 });
+    c.playVersion(st, Math.max(0, i), { fromStart: fromStart || i < 0 });
   };
 
   return (
@@ -44,8 +48,8 @@ export function MyFiles() {
       <div className="panel my-files-head">
         <p className="hint">
           {ar
-            ? "أضف تسجيلات أم كلثوم الموجودة عندك (MP3 أو M4A أو FLAC…). تُحفظ على هذا الجهاز فقط — لا تُرفع إلى أي خادم ولا يراها غيرك — وتعمل دون إنترنت، مع الاستكمال من آخر دقيقة."
-            : "Add Umm Kulthum recordings you have (MP3, M4A, FLAC…). Stored on this device only — never uploaded — and they play offline, resuming where you stopped."}
+            ? `أضف تسجيلات ${A.nameAr} الموجودة عندك (MP3 أو M4A أو FLAC…). تُحفظ على هذا الجهاز فقط — لا تُرفع إلى أي خادم ولا يراها غيرك — وتعمل دون إنترنت، مع الاستكمال من آخر دقيقة.`
+            : `Add ${A.nameEn} recordings you have (MP3, M4A, FLAC…). Stored on this device only — never uploaded — and they play offline, resuming where you stopped.`}
         </p>
         <div className="row gap-s wrap">
           <button className="btn btn-gold" onClick={() => input.current?.click()} disabled={!!busy}>
@@ -66,7 +70,7 @@ export function MyFiles() {
           onChange={async (e) => {
             const list = e.target.files;
             if (!list?.length) return;
-            const r = await addFiles(list);
+            const r = await addFiles(list, slug);
             e.target.value = "";
             setMsg(
               ar
@@ -106,7 +110,7 @@ export function MyFiles() {
           const pos = current ? snap.position : pr?.pos ?? 0;
           const dur = (current ? snap.duration : 0) || pr?.dur || f.duration;
           const pct = dur ? Math.min(100, (pos / dur) * 100) : 0;
-          const resumeAt = mounted ? resumePosition(ummStore.get(), eid) : 0;
+          const resumeAt = mounted ? resumePosition(c.store.get(), eid) : 0;
           return (
             <li key={f.id} className={`episode ${current ? "is-current" : ""} ${pr?.done ? "is-done" : ""}`}>
               <button className="ep-play" disabled={f.playable === false} onClick={() => (current ? player().toggle() : void play(f.id))} aria-label={playing ? (ar ? "إيقاف مؤقت" : "Pause") : `${ar ? "تشغيل" : "Play"} ${f.title}`}>

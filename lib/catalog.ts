@@ -82,6 +82,8 @@ const KNOWN: { match: string[]; meta: Meta }[] = [
   { match: ["المنشاوي مجود", "المنشاوى مجود", "minshawi mujawwad"], meta: { id: "minshawi-mojawwad", nameEn: "Al-Minshawi Radio (Mujawwad)", category: "quran", aliases: ["المنشاوي مجود", "minshawi mujawwad"] } },
   { match: ["المنشاوي", "المنشاوى", "minshawi"], meta: { id: "minshawi", nameEn: "Al-Minshawi Radio", category: "quran", aliases: ["المنشاوي", "محمد صديق المنشاوي", "minshawi", "menshawy"] } },
   { match: ["كلثوم", "kalthoum", "kolthoum", "kulthum"], meta: { id: "umm-kulthum", nameEn: "Umm Kulthum Radio", category: "music", anyCountry: true, matchNames: ["كلثوم", "kalthoum", "kolthoum", "kalthom", "kulthum", "koulthoum"], aliases: ["ام كلثوم", "كوكب الشرق", "umm kulthum", "oum kalthoum", "om kalthoum"] } },
+  { match: ["النيل للأخبار", "النيل للاخبار", "النيل الإخبارية", "النيل الاخبارية", "nile news"], meta: { id: "eg-nile-news", nameEn: "Nile News Radio", category: "news", frequency: "102.7 FM", website: "https://www.nile.eg/", matchNames: ["nile news", "النيل للاخبار", "النيل الاخباريه", "قناة النيل للأخبار"], aliases: ["النيل للاخبار", "النيل الاخباريه", "راديو النيل للاخبار", "nile news", "nile news radio", "102.7"] } },
+  { match: ["عبد الحليم", "عبدالحليم", "حليم", "halim"], meta: { id: "halim-live", nameEn: "Abdel Halim Hafez Radio", category: "music", anyCountry: true, matchNames: ["حليم", "halim", "7alim", "hafez"], aliases: ["عبد الحليم حافظ", "العندليب", "abdel halim hafez", "abdelhalim"] } },
   { match: ["الإسكندرية", "الاسكندرية"], meta: { id: "eg-alexandria", nameEn: "Alexandria Radio", category: "regional", aliases: ["اذاعة الاسكندرية", "alexandria radio"] } },
 ];
 

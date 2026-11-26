@@ -72,6 +72,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <Icon name="music" />
               <span>{t.umm}</span>
             </Link>
+            <Link href="/halim" className={`nav-item ${isOn(path, "/halim") ? "active" : ""}`}>
+              <Icon name="music" />
+              <span>{t.halim}</span>
+            </Link>
             <Link href="/drive" className={`nav-item ${path === "/drive" ? "active" : ""}`}>
               <Icon name="car" />
               <span>{t.drive}</span>
