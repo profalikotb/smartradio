@@ -12,7 +12,7 @@ const csp = [
   "connect-src 'self' https:",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
-  "frame-src 'none'",
+  "frame-src https://geo.dailymotion.com https://www.dailymotion.com https://www.youtube.com https://www.youtube-nocookie.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

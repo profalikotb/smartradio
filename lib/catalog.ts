@@ -116,7 +116,8 @@ export function stationFromRow(row: ChannelRow): CatalogStation {
     core: CORE_IDS.includes(m.id as (typeof CORE_IDS)[number]),
     archive: archiveOf(row),
     playlist: isPlaylist(row) ? { base: row.url!.replace(/\/?$/, "/"), count: 114 } : undefined,
-    directStreams: isPlaylist(row) || archiveOf(row) ? undefined : row.url ? (row.urls?.length ? row.urls : [row.url]).map((url) => ({ url, codec: row.format ?? undefined })) : undefined,
+    officialPlayer: embedOf(row),
+    directStreams: isPlaylist(row) || archiveOf(row) || embedOf(row) ? undefined : row.url ? (row.urls?.length ? row.urls : [row.url]).map((url) => ({ url, codec: row.format ?? undefined })) : undefined,
     match: { names: m.matchNames ?? m.aliases.slice(0, 2), anyCountry: m.anyCountry },
     favourite: row.favourite,
     section: row.section || undefined,
@@ -127,6 +128,23 @@ export function stationFromRow(row: ChannelRow): CatalogStation {
       note: [row.result, row.checkedOn ? `(${row.checkedOn})` : "", row.notes].filter(Boolean).join(" — ") || "From the Excel station list.",
     },
   };
+}
+
+/**
+ * Format "Embed": the link is the station's own embedded live player (Dailymotion / YouTube),
+ * opened in the in-app player window. Used only when no direct audio stream exists.
+ */
+function embedOf(row: ChannelRow): CatalogStation["officialPlayer"] {
+  if (!row.url || !/embed|مشغل|مشغّل/i.test(row.format ?? "")) return undefined;
+  let host = "";
+  try {
+    host = new URL(row.url).hostname;
+  } catch {
+    return undefined;
+  }
+  const provider = /dailymotion/.test(host) ? "Dailymotion" : /youtube/.test(host) ? "YouTube" : host;
+  if (!/(^|\.)(dailymotion\.com|youtube\.com|youtube-nocookie\.com)$/.test(host)) return undefined; // only these are allowed by the page's security policy
+  return { embedUrl: row.url, pageUrl: row.source ?? row.url, provider };
 }
 
 /** Format column says "Playlist" (or قائمة/سور) and the link is a folder of 001.mp3…114.mp3 files. */

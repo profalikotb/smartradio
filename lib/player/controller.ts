@@ -1,4 +1,5 @@
 "use client";
+import { catalogById } from "../catalog";
 import { useSyncExternalStore } from "react";
 import { PlayerEngine, type ErrorKind, type HlsLike, type PlayerSnapshot } from "./engine";
 import { resolvePlaylist } from "../directoryClient";
@@ -105,6 +106,12 @@ class Controller {
 
   /** Call from a tap handler. Starts immediately from cache when possible, otherwise resolves first. */
   playById(id: string) {
+    // Embed-only stations play in the in-app official-player window (components/OfficialPlayer).
+    if (catalogById.get(id)?.officialPlayer?.embedUrl) {
+      this.stop();
+      window.dispatchEvent(new CustomEvent("smart-radio:open-embed", { detail: id }));
+      return;
+    }
     this.engine.unlock();
     this.resolveAbort?.abort();
     this.engine.lowData = getState().settings.lowData;

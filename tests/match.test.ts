@@ -21,12 +21,17 @@ describe("catalog comes from the Excel list", () => {
     expect(CATALOG[0]!.id).toBe(QURAN_CAIRO_ID);
     for (const id of [AL_AGHANI_ID, "eg-general-program", "eg-sout-el-arab", "eg-middle-east", "eg-cultural"]) expect(catalogById.has(id), id).toBe(false);
   });
-  it("every Excel link becomes the station's stream; no Dailymotion player anywhere", () => {
+  it("every Excel link becomes the station's stream; embedded players only where Format = Embed", () => {
     for (const r of ROWS.filter((x) => x.show !== false)) {
       const c = CATALOG.find((x) => x.nameAr === r.name)!;
-      if (c.archive) expect(r.url).toContain(c.archive.ids[0]);
-      else expect(c.directStreams?.[0]?.url ?? c.playlist?.base ?? null).toBe(r.url);
-      expect(c.officialPlayer).toBeUndefined();
+      if (/embed/i.test(r.format ?? "")) {
+        expect(c.officialPlayer?.embedUrl).toBe(r.url);
+        expect(c.directStreams).toBeUndefined();
+      } else {
+        expect(c.officialPlayer).toBeUndefined();
+        if (c.archive) expect(r.url).toContain(c.archive.ids[0]);
+        else expect(c.directStreams?.[0]?.url ?? c.playlist?.base ?? null).toBe(r.url);
+      }
       expect(c.radioBrowserUuid).toBeUndefined();
     }
   });
@@ -126,12 +131,16 @@ describe("section-only stations (Excel Show = Section)", () => {
   });
 });
 
-describe("Radio Masr 88.7 / Nile News 102.7 (27/11/2026)", () => {
-  it("are hidden: only embedded video players exist, no direct audio stream; no dead link kept", () => {
-    expect(catalogById.has("eg-radio-masr")).toBe(false);
-    expect(catalogById.has("eg-nile-news")).toBe(false);
-    const rows = (CHANNELS as ChannelRow[]).filter((r) => r.name === "راديو مصر" || r.name.startsWith("النيل للأخبار"));
-    expect(rows).toHaveLength(2);
-    expect(rows.every((r) => r.show === false && !r.url)).toBe(true);
+describe("Radio Masr 88.7 / Nile News 102.7: official players (Format = Embed)", () => {
+  it("open in the in-app player window, never as a fake audio stream", () => {
+    const masr = catalogById.get("eg-radio-masr")!;
+    expect(masr.officialPlayer).toMatchObject({ embedUrl: "https://geo.dailymotion.com/player/xi5eg.html?video=x8n6dpk", provider: "Dailymotion" });
+    expect(masr.directStreams).toBeUndefined();
+    const nile = catalogById.get("eg-nile-news")!;
+    expect(nile.officialPlayer).toMatchObject({ embedUrl: "https://www.youtube.com/embed/L2ovjOx0Dqo", provider: "YouTube" });
+    expect(nile.directStreams).toBeUndefined();
+  });
+  it("only Dailymotion/YouTube links are accepted as embeds", () => {
+    expect(stationFromRow(row({ name: "x", url: "https://evil.example/player", format: "Embed" })).officialPlayer).toBeUndefined();
   });
 });

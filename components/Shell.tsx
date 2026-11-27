@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "./Icon";
 import { BottomPlayer } from "./Player";
+import { EmbedHost } from "./OfficialPlayer";
 import { useOnline, useT } from "@/lib/ui";
 import { useEffect } from "react";
 import { wireTafsirProgress } from "@/lib/tafsir/client";
@@ -92,6 +93,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </div>
 
       <BottomPlayer hidden={immersive} />
+      <EmbedHost />
 
       {!immersive && (
         <nav className="tabbar" aria-label="Main">

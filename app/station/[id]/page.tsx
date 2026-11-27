@@ -77,7 +77,7 @@ export default function StationPage({ params }: { params: Promise<{ id: string }
         </p>
       )}
 
-      {c && <StreamLinkEditor id={id} failed={!!(current && ui && (ui.status === "unavailable" || ui.status === "resolve-failed"))} />}
+      {c && !c.officialPlayer?.embedUrl && <StreamLinkEditor id={id} failed={!!(current && ui && (ui.status === "unavailable" || ui.status === "resolve-failed"))} />}
 
       {c && c.identity.status === "unverified" && !hasStream(id) && <Candidates catalogId={c.id} />}
 
