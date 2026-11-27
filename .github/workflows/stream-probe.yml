@@ -17,17 +17,11 @@ jobs:
             d=$(timeout 25 ffmpeg -hide_banner -nostdin -user_agent "$UA" -t 8 -i "$u" -f null - 2>&1 | grep -oE "Audio: [a-z0-9]+|time=[0-9:.]+" | tail -2 | tr '\n' ' ')
             echo "PROBE $u => HTTP $h => DECODE ${d:-FAILED}"
           }
-          echo "=== Egypt directory entries matching masr/misr/nile/مصر/النيل"
-          curl -sS -m 30 -A "SmartRadioProbe/1.0" "https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/EG?hidebroken=false&limit=2000" \
-            | jq -r '.[] | [.name, .codec, (.bitrate|tostring), (.lastcheckok|tostring), .homepage, .url_resolved] | @tsv' \
-            | grep -iE "masr|misr|nile|مصر|النيل|news|اخبار|أخبار" | tee /tmp/eg
-          cut -f6 /tmp/eg | sort -u | head -15 | while read -r u; do [ -n "$u" ] && probe "$u"; done
-          echo "=== official pages: stream-looking URLs"
-          for page in "https://www.radiomasr.net/" "https://radiomasr.net/" "https://www.radiomasr.net/live" "https://www.nile.eg/" "https://www.nile.eg/live" "https://www.maspero.eg/radio" "https://www.maspero.eg/live"; do
+          for page in "https://www.radiomasr.net/live-stream/" "https://www.radiomasr.net/live/"; do
             echo "--- $page"
-            curl -sS -L -m 20 -A "$UA" "$page" -o /tmp/p -w "HTTP %{http_code} %{url_effective}\n" 2>&1 | tail -1
-            grep -oiE "(https?:)?//[^\"' <>()]+(\.m3u8|\.mp3|\.aac|/stream|/live[^\"' <>]*|radiojar[^\"' <>]*|zeno\.fm[^\"' <>]*|streamtheworld[^\"' <>]*|:[0-9]{4}/[^\"' <>]*|dailymotion[^\"' <>]*|youtube\.com/embed[^\"' <>]*|player[^\"' <>]*)" /tmp/p | sort -u | head -25
+            curl -sS -L -m 20 -A "$UA" "$page" -o /tmp/p -w "HTTP %{http_code}\n" | tail -1
+            grep -oiE "(https?:)?//[^\"' <>()]+" /tmp/p | grep -viE "\.(css|png|jpe?g|gif|svg|woff2?|ico)([?#]|$)|fonts\.|gravatar|wp-json|xmlrpc|/feed|wp-includes|facebook\.com/sharer|twitter\.com/share" | sort -u | head -60
+            echo "--- media/player lines"
+            grep -iE "mp3|m3u8|aac|stream|setMedia|jPlayer|<audio|<source|<iframe|radiojar|zeno|shoutcast|icecast" /tmp/p | sed 's/^[[:space:]]*//' | cut -c1-300 | head -30
           done
-          echo "=== candidate radiomasr hosts"
-          for u in "https://stream.radiojar.com/radiomasr" "https://radiomasr.net/live" "https://live.radiomasr.net/" "https://stream.radiomasr.net/" ; do probe "$u"; done
-          getent hosts live.radiomasr.net radiomasr.net www.radiomasr.net || echo "DNS: some hosts do not resolve"
+          for u in $(grep -ohiE "https?://[^\"' <>()]+" /tmp/p | grep -iE "\.m3u8|\.mp3|\.aac|/stream|:[0-9]{4}|radiojar|zeno|live" | grep -viE "\.(css|js|png|jpe?g)" | sort -u | head -10); do probe "$u"; done
