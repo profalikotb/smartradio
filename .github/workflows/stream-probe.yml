@@ -1,0 +1,34 @@
+name: stream-probe
+on:
+  push:
+    branches: [stream-probe]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - run: sudo apt-get -qq update >/dev/null && sudo apt-get -qq install -y ffmpeg jq >/dev/null
+      - name: probe
+        run: |
+          probe() {
+            u="$1"
+            h=$(curl -sS -L -m 12 -r 0-4000 -o /tmp/b -w "%{http_code} %{content_type} %{url_effective}" -A "Mozilla/5.0" "$u" 2>&1 | tail -1)
+            head=$(head -c 120 /tmp/b 2>/dev/null | tr -cd '[:print:]' | head -c 80)
+            d=$(timeout 25 ffmpeg -hide_banner -nostdin -user_agent "Mozilla/5.0" -t 6 -i "$u" -f null - 2>&1 | grep -oE "Audio: [a-z0-9]+[^,]*, [0-9]+ Hz|time=[0-9:.]+" | tail -2 | tr '\n' ' ')
+            echo "URL $u"
+            echo "   HTTP $h"
+            echo "   HEAD $head"
+            echo "   DECODE ${d:-FAILED}"
+          }
+          echo "=== known links"
+          probe "https://live.radiomasr.net/RADIOMASR"
+          probe "http://live.radiomasr.net/RADIOMASR"
+          probe "https://live.radiomasr.net/RADIOMASR.m3u8"
+          probe "https://egonair.com:8004/;"
+          for q in "radio%20masr" "radio%20misr" "%D8%B1%D8%A7%D8%AF%D9%8A%D9%88%20%D9%85%D8%B5%D8%B1" "nile%20news" "%D8%A7%D9%84%D9%86%D9%8A%D9%84%20%D9%84%D9%84%D8%A3%D8%AE%D8%A8%D8%A7%D8%B1" "%D8%A7%D9%84%D9%86%D9%8A%D9%84%20%D8%A7%D9%84%D8%A5%D8%AE%D8%A8%D8%A7%D8%B1%D9%8A%D8%A9" "nile%20tv" "102.7" "88.7"; do
+            echo "=== directory: $q"
+            curl -sS -m 20 -A "SmartRadioProbe/1.0" "https://de1.api.radio-browser.info/json/stations/search?name=$q&limit=25&hidebroken=false" \
+              | jq -r '.[] | [.stationuuid, .name, .countrycode, .codec, (.bitrate|tostring), (.lastcheckok|tostring), .homepage, .url_resolved] | @tsv' > /tmp/list || true
+            cat /tmp/list
+            cut -f8 /tmp/list | sort -u | head -12 | while read -r u; do [ -n "$u" ] && probe "$u"; done
+          done
