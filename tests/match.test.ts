@@ -126,25 +126,12 @@ describe("section-only stations (Excel Show = Section)", () => {
   });
 });
 
-describe("Nile News radio 102.7", () => {
-  it("is listed, with no invented link; the finder accepts only Egyptian Nile News listings", () => {
-    const c = catalogById.get("eg-nile-news")!;
-    expect(c.frequency).toBe("102.7 FM");
-    expect(c.directStreams).toBeUndefined();
-    expect(c.identity.status).toBe("unverified");
-    expect(isCandidate(c, rec({ name: "Nile News Radio" }))).toBe(true);
-    expect(isCandidate(c, rec({ name: "راديو النيل للأخبار" }))).toBe(true);
-    expect(isCandidate(c, rec({ name: "Nile FM" }))).toBe(false);
-    expect(isCandidate(c, rec({ name: "Nile News", countrycode: "SD" }))).toBe(false);
-  });
-});
-
-describe("Radio Masr 88.7", () => {
-  it("uses the stream on the station's own domain, with its stable id and frequency", () => {
-    const c = catalogById.get("eg-radio-masr")!;
-    expect(c.directStreams![0]!.url).toBe("https://live.radiomasr.net/RADIOMASR");
-    expect(c.frequency).toBe("88.7 FM");
-    expect(c.category).toBe("news");
-    expect(catalogById.get("eg-nile-news")!.nameAr).not.toBe(c.nameAr);
+describe("Radio Masr 88.7 / Nile News 102.7 (27/11/2026)", () => {
+  it("are hidden: only embedded video players exist, no direct audio stream; no dead link kept", () => {
+    expect(catalogById.has("eg-radio-masr")).toBe(false);
+    expect(catalogById.has("eg-nile-news")).toBe(false);
+    const rows = (CHANNELS as ChannelRow[]).filter((r) => r.name === "راديو مصر" || r.name.startsWith("النيل للأخبار"));
+    expect(rows).toHaveLength(2);
+    expect(rows.every((r) => r.show === false && !r.url)).toBe(true);
   });
 });
