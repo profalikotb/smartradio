@@ -34,14 +34,17 @@ export default function Home() {
   const tafsirLast = useProgress((p) => p.last);
   const ummLast = CLIENTS.umm.store.use((p) => p.last);
   const halimLast = CLIENTS.halim.store.use((p) => p.last);
+  const fairuzLast = CLIENTS.fairuz.store.use((p) => p.last);
   CLIENTS.umm.useLibrary(); // warm the singer libraries so "continue" works in one tap
   CLIENTS.halim.useLibrary();
+  CLIENTS.fairuz.useLibrary();
   // The most recent recorded listening across Tafsir and the singer sections.
   const latest = (
     [
       ["tafsir", tafsirLast?.at ?? 0],
       ["umm", ummLast?.at ?? 0],
       ["halim", halimLast?.at ?? 0],
+      ["fairuz", fairuzLast?.at ?? 0],
     ] as const
   )
     .filter(([, at]) => at > 0)
@@ -80,6 +83,10 @@ export default function Home() {
           <span className="dash-ico" aria-hidden>🎙️</span>
           <span>{lang === "ar" ? "عبد الحليم حافظ" : "Abdel Halim"}</span>
         </Link>
+        <Link href="/fairuz" className="dash-btn is-fairuz">
+          <span className="dash-ico" aria-hidden>🌙</span>
+          <span>{lang === "ar" ? "فيروز" : "Fairuz"}</span>
+        </Link>
         <Link href="/favorites" className="dash-btn">
           <span className="dash-ico" aria-hidden>❤️</span>
           <span>{lang === "ar" ? "المفضلة" : "Favorites"}</span>
@@ -103,7 +110,7 @@ export default function Home() {
         </button>
       </nav>
 
-      {latest[0] === "umm" || latest[0] === "halim" ? <ArtistContinue slug={latest[0]} compact /> : <TafsirContinue compact />}
+      {latest[0] && latest[0] !== "tafsir" ? <ArtistContinue slug={latest[0]} compact /> : <TafsirContinue compact />}
 
       {showResume && lastView && (
         <button className="resume-card" onClick={() => player().playById(lastView.id)}>

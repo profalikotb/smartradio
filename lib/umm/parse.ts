@@ -166,11 +166,46 @@ const HALIM_TITLES: [string, string[]][] = [
   ["الليل", ["el leil", "al layl"]],
 ];
 
+/** Fairuz: known titles + transliterations used by the archive uploads (e.g. "Fairouz-BhebakMaBaarif"). */
+const FAIRUZ_TITLES: [string, string[]][] = [
+  ["أعطني الناي وغنِّ", ["aateny el nay wa ghany", "aatini al nay", "aateni el nay"]],
+  ["أحترف الحزن والانتظار", ["ahtarifou al houzna", "ahtarif el hozn"]],
+  ["الله معك يا هوانا", ["alah maak ya hawana", "allah maak ya hawana"]],
+  ["على جسر اللوزية", ["ala jisr el laouzieh", "ala jesr el lawzieh"]],
+  ["بعدك على بالي", ["baadak ala bali", "ba3dak 3ala bali"]],
+  ["بحبك ما بعرف", ["bhebak ma baarif", "b7ebak ma ba3ref"]],
+  ["بكوخنا يا ابني", ["bkoukhna yabni", "bkokhna ya ebni"]],
+  ["درج الورد", ["daraj el ward"]],
+  ["بقطفلك بس", ["bakteflek bas", "ba2tefellak bass"]],
+  ["بكرا بيجي نيسان", ["bokra byeji nisan"]],
+  ["سألوني الناس", ["saalouni el nas", "sa2alouni el nas"]],
+  ["شادي", ["shady", "shadi"]],
+  ["زهرة المدائن", ["zahrat al madaen", "zahret el madayen"]],
+  ["نسم علينا الهوى", ["nassam alayna el hawa", "nasam 3alayna el hawa"]],
+  ["كيفك إنت", ["kifak enta", "keefak inta"]],
+  ["سهار بعد سهار", ["sahar baad sahar"]],
+  ["حبيتك بالصيف", ["habbaytak bel sayf", "7abaytak bel seif"]],
+  ["قديش كان في ناس", ["addesh kan fi nas", "adeish kan fi nas"]],
+  ["أنا لحبيبي", ["ana la habibi", "ana lahabibi"]],
+  ["يا دارة دوري فينا", ["ya dara douri fina"]],
+  ["نحنا والقمر جيران", ["nehna wel amar jiran", "nehna wel 2amar jiran"]],
+  ["سكن الليل", ["sakana el layl", "sakan el leil"]],
+  ["سنرجع يومًا", ["sanarjeou yawman", "sanarja3 yawman"]],
+  ["شط إسكندرية", ["shatt eskendereya"]],
+  ["يا أنا يا أنا", ["ya ana ya ana"]],
+  ["ليالي الشمال الحزينة", ["layali el shamal el hazina"]],
+  ["بيروت هل ذرفت", ["bairut hal zarafat", "beirut hal tharafat"]],
+  ["الكويت", ["al kuwait", "el kuwait"]],
+  ["دبكة لبنان", ["debka lebonan", "dabke lebnan"]],
+];
+
 /** How one artist's archive files are read: titles, name prefixes to strip, files that are not songs. */
 export interface ParseOpts {
   translit: [string, string[]][];
   stripPrefix: RegExp;
   exclude: RegExp;
+  /** Extra text removed anywhere in a name (album tags like «أغاني الحنين», "( Fairuz )"). */
+  cleanup?: RegExp;
 }
 export const UMM_PARSE: ParseOpts = { translit: TRANSLIT, stripPrefix: /^أم كلثوم\s*[-–—]\s*/, exclude: /qur'?an|quran|قرآن|قران/i };
 export const HALIM_PARSE: ParseOpts = {
@@ -178,6 +213,13 @@ export const HALIM_PARSE: ParseOpts = {
   stripPrefix: /^(?:عبد\s*ال?حليم\s*حافظ|بد\s*الحليم\s*حافظ|العندليب|حليم|حافظ)\s*[.\-–—_:]*\s*/,
   // Interviews, talks and programmes are not songs.
   exclude: /حوار|برنامج|لقاء|يحكى|يحكي|يتعالج|يتعالح|مقابلة|حديث مع|حديث عن|interview|adil imam|qur'?an|قرآن/i,
+};
+
+export const FAIRUZ_PARSE: ParseOpts = {
+  translit: FAIRUZ_TITLES,
+  stripPrefix: /^(?:السيدة\s+)?(?:فيروز|fairou?z|fayrouz|feyrouz)\s*[.\-–—_:]*\s*/i,
+  exclude: /the best of|تشكيلة|أجمل اغاني|اجمل اغاني|من جميع الألبومات|interview|حوار|لقاء/i,
+  cleanup: /\(\s*fairou?z\s*\)|[اأ]غاني الحنين|\s+[-–—]?\s*فيروز\s*$/gi,
 };
 
 interface Compiled {
@@ -258,7 +300,10 @@ export function parseSeconds(len?: string): number {
 /** Title for one file: folder (Arabic) → distinctive Arabic metadata title → Arabic file name → known transliteration → Latin. */
 export function identify(f: IaFile, titleCounts: Map<string, number>, opts: ParseOpts = UMM_PARSE): { song: string; arabic: boolean; detail: string } | null {
   const c = compile(opts);
-  const base = cleanBase(f.name).replace(opts.stripPrefix, "").replace(opts.stripPrefix, "").trim();
+  let base = cleanBase(f.name).replace(opts.stripPrefix, "").replace(opts.stripPrefix, "").trim();
+  if (opts.cleanup) base = base.replace(opts.cleanup, " ").replace(/\s+/g, " ").replace(/^[-–—\s]+|[-–—\s]+$/g, "").trim();
+  // "BhebakMaBaarif" → "Bhebak Ma Baarif" (CamelCase transliterations)
+  if (!/\s/.test(base) && /[a-z][A-Z]/.test(base)) base = base.replace(/([a-z])([A-Z])/g, "$1 $2");
   if (opts.exclude.test(base) || opts.exclude.test(f.title ?? "")) return null; // not a song
   const folder = f.name.includes("/") ? f.name.split("/").slice(-2, -1)[0]!.trim() : "";
   if (folder && isArabic(folder)) {
@@ -359,7 +404,7 @@ export function buildLibrary(input: { source: UmmSource; files: IaFile[] | null 
 
 /** Display names for the player ids "<prefix>all" / "<prefix>my" / "<prefix>s:<key>" (songs registered at runtime). */
 const names = new Map<string, string>();
-const PREFIX_NAMES: Record<string, [string, string]> = { "umm:": ["أم كلثوم", "Umm Kulthum"], "halim:": ["عبد الحليم حافظ", "Abdel Halim Hafez"] };
+const PREFIX_NAMES: Record<string, [string, string]> = { "umm:": ["أم كلثوم", "Umm Kulthum"], "halim:": ["عبد الحليم حافظ", "Abdel Halim Hafez"], "fairuz:": ["فيروز", "Fairuz"] };
 export function registerSongNames(lib: Library, prefix = "umm:") {
   for (const s of lib.songs) names.set(prefix + s.key, s.title);
 }

@@ -162,6 +162,7 @@ function createArtistClient(artist: Artist): ArtistClient {
 export const CLIENTS: Record<ArtistSlug, ArtistClient> = {
   umm: createArtistClient(ARTISTS.umm),
   halim: createArtistClient(ARTISTS.halim),
+  fairuz: createArtistClient(ARTISTS.fairuz),
 };
 export const clientFor = (slug: ArtistSlug) => CLIENTS[slug];
 

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useSyncExternalStore } from "react";
 import type { PlayableStation } from "../types";
-import { HALIM_PARSE, identify, UMM_PARSE } from "./parse";
+import { FAIRUZ_PARSE, HALIM_PARSE, identify, UMM_PARSE } from "./parse";
 import { sniff } from "./sniff";
 
 /**
@@ -22,7 +22,7 @@ export interface LocalFile {
   format?: string;
   playable?: boolean;
   /** Which singer section the file belongs to (files from before this field = Umm Kulthum). */
-  artist?: "umm" | "halim";
+  artist?: "umm" | "halim" | "fairuz";
 }
 
 interface Row extends LocalFile {
@@ -30,7 +30,7 @@ interface Row extends LocalFile {
 }
 
 export const MY_FILES_ID = "umm:my";
-const NAMES = { umm: ["أم كلثوم", "Umm Kulthum"], halim: ["عبد الحليم حافظ", "Abdel Halim Hafez"] } as const;
+const NAMES = { umm: ["أم كلثوم", "Umm Kulthum"], halim: ["عبد الحليم حافظ", "Abdel Halim Hafez"], fairuz: ["فيروز", "Fairuz"] } as const;
 export type FilesArtist = keyof typeof NAMES;
 export const myFilesId = (a: FilesArtist) => `${a}:my`;
 const DB = "smart-radio-files";
@@ -101,7 +101,7 @@ export function useMyFiles(): FilesState {
 
 /** Recognise the song (same rules as the online library); otherwise the file name. */
 export function titleFor(fileName: string, artist: FilesArtist = "umm"): string {
-  const id = identify({ name: fileName.replace(/\.[a-z0-9]{2,5}$/i, ".mp3"), source: "original" }, new Map(), artist === "halim" ? HALIM_PARSE : UMM_PARSE);
+  const id = identify({ name: fileName.replace(/\.[a-z0-9]{2,5}$/i, ".mp3"), source: "original" }, new Map(), artist === "halim" ? HALIM_PARSE : artist === "fairuz" ? FAIRUZ_PARSE : UMM_PARSE);
   const base = fileName.replace(/\.[a-z0-9]{2,5}$/i, "").replace(/[_]+/g, " ").trim();
   if (!id || !id.arabic) return base; // unrecognised: keep the user's own file name
   return id.detail ? `${id.song} — ${id.detail}` : id.song;

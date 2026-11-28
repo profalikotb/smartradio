@@ -117,7 +117,7 @@ export function playableFromDirectory(group: DirectoryStation[]): PlayableStatio
 /** Synchronous view for lists/cards. */
 export function viewOf(id: string, s: AppState = getState()): StationView | null {
   const tn = tafsirName(id) ?? ummName(id);
-  if (tn) return { id, ...tn, country: "EG", category: id.startsWith("umm:") || id.startsWith("halim:") ? "music" : "religious", identity: "unverified", core: false };
+  if (tn) return { id, ...tn, country: "EG", category: id.startsWith("umm:") || id.startsWith("halim:") || id.startsWith("fairuz:") ? "music" : "religious", identity: "unverified", core: false };
   const c = catalogById.get(id);
   if (c) {
     const bound = s.bindings[id];

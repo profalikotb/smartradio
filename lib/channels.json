@@ -517,5 +517,23 @@
     "category": null,
     "show": true,
     "section": true
+  },
+  {
+    "no": 31,
+    "name": "إذاعة فيروز",
+    "nameEn": null,
+    "url": null,
+    "urls": [],
+    "format": null,
+    "result": null,
+    "checkedOn": null,
+    "favourite": false,
+    "core": null,
+    "source": null,
+    "notes": "قسم فيروز: البث المباشر يُختار تلقائيًا من دليل الإذاعات",
+    "frequency": null,
+    "category": null,
+    "show": true,
+    "section": true
   }
 ]

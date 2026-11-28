@@ -1,11 +1,11 @@
-import { HALIM_PARSE, UMM_PARSE, UMM_SOURCES, type ParseOpts, type UmmSource } from "./parse";
+import { FAIRUZ_PARSE, HALIM_PARSE, UMM_PARSE, UMM_SOURCES, type ParseOpts, type UmmSource } from "./parse";
 
 /**
  * Singer sections (Umm Kulthum, Abdel Halim Hafez…). Each has its own song library from the Internet
  * Archive, its own listening history and favorites, «ملفاتي», continuous play and a live radio.
  * Umm Kulthum keeps the ids/keys it had before this was generalised, so saved progress carries over.
  */
-export type ArtistSlug = "umm" | "halim";
+export type ArtistSlug = "umm" | "halim" | "fairuz";
 
 export interface Artist {
   slug: ArtistSlug;
@@ -38,6 +38,13 @@ export const HALIM_SOURCES: UmmSource[] = [
   { key: "z6", item: "7alim6-tessgilette_zemene", name: "Internet Archive — عبد الحليم حافظ (6)", url: "https://archive.org/details/7alim6-tessgilette_zemene", kind: "mixed" },
   { key: "film", item: "halim_maabodat_eljamahir", name: "Internet Archive — أغاني فيلم معبودة الجماهير (صوت الفن)", url: "https://archive.org/details/halim_maabodat_eljamahir", kind: "studio" },
   { key: "adeya", item: "halim_aladeyaaa", name: "Internet Archive — الأدعية (صوت الفن)", url: "https://archive.org/details/halim_aladeyaaa", kind: "studio" },
+];
+
+export const FAIRUZ_SOURCES: UmmSource[] = [
+  { key: "hanin", item: "Fairuz_201802", name: "Internet Archive — فيروز، أغاني الحنين", url: "https://archive.org/details/Fairuz_201802", kind: "mixed" },
+  { key: "f1", item: "moharram1965_gmail_20171102", name: "Internet Archive — فيروزيات", url: "https://archive.org/details/moharram1965_gmail_20171102", kind: "mixed" },
+  { key: "f3", item: "moharram1965_gmail_20171102_1234", name: "Internet Archive — فيروزيات (3)", url: "https://archive.org/details/moharram1965_gmail_20171102_1234", kind: "mixed" },
+  { key: "bouquet", item: "AghaniFeyrouz", name: "Internet Archive — باقة من أغاني السيدة فيروز", url: "https://archive.org/details/AghaniFeyrouz", kind: "mixed" },
 ];
 
 export const ARTISTS: Record<ArtistSlug, Artist> = {
@@ -80,6 +87,26 @@ export const ARTISTS: Record<ArtistSlug, Artist> = {
     parse: HALIM_PARSE,
     storeKeys: ["smart-radio:halim-progress:v1", "halim-progress"],
     libKey: "smart-radio:halim-library:v1",
+  },
+  fairuz: {
+    slug: "fairuz",
+    prefix: "fairuz:",
+    route: "/fairuz",
+    api: "/api/fairuz",
+    nameAr: "فيروز",
+    nameEn: "Fairuz",
+    titleAr: "جارة القمر – فيروز",
+    titleEn: "Fairuz",
+    subtitleAr: "أغاني الصباح والحنين",
+    subtitleEn: "Morning songs and classics",
+    mark: "🌙",
+    liveId: "fairuz-live",
+    liveTitleAr: "إذاعة فيروز – بث مباشر",
+    liveDescAr: "إذاعة مخصصة لفيروز على مدار الساعة، يختارها التطبيق تلقائيًا من دليل الإذاعات العالمي. بث حي: لا تقديم ولا استكمال، وقد تتضمن إعلانات المحطة نفسها.",
+    sources: FAIRUZ_SOURCES,
+    parse: FAIRUZ_PARSE,
+    storeKeys: ["smart-radio:fairuz-progress:v1", "fairuz-progress"],
+    libKey: "smart-radio:fairuz-library:v1",
   },
 };
 

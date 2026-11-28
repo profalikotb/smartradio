@@ -2381,3 +2381,23 @@ details.tech[open] > summary::before {
 .dash .dash-wide {
   grid-column: 1 / -1;
 }
+
+/* ===================== Fairuz ===================== */
+.dash-btn.is-fairuz {
+  border-color: color-mix(in srgb, #6d8fd8 45%, var(--line));
+  background: linear-gradient(160deg, var(--surface), color-mix(in srgb, #6d8fd8 16%, transparent));
+}
+.artist-fairuz .umm-mark {
+  background: color-mix(in srgb, #6d8fd8 18%, transparent);
+}
+.artist-fairuz .tafsir-sub,
+.continue-card.artist-fairuz .cc-kicker {
+  color: #6d8fd8;
+}
+.continue-card.artist-fairuz {
+  border-color: color-mix(in srgb, #6d8fd8 45%, var(--line));
+  background: linear-gradient(160deg, var(--surface), color-mix(in srgb, #6d8fd8 14%, transparent));
+}
+.continue-card.artist-fairuz .cc-bar > span {
+  background: #6d8fd8;
+}
