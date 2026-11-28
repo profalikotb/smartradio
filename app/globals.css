@@ -2401,3 +2401,56 @@ details.tech[open] > summary::before {
 .continue-card.artist-fairuz .cc-bar > span {
   background: #6d8fd8;
 }
+
+/* ===================== الخلافة الإسلامية (YouTube) ===================== */
+.dash-btn.is-khilafa {
+  border-color: color-mix(in srgb, #a0522d 45%, var(--line));
+  background: linear-gradient(160deg, var(--surface), color-mix(in srgb, #a0522d 14%, transparent));
+}
+.khilafa-mark {
+  background: color-mix(in srgb, #a0522d 18%, transparent);
+}
+.khilafa .tafsir-sub,
+.continue-card.is-khilafa .cc-kicker {
+  color: #a0522d;
+}
+.continue-card.is-khilafa {
+  border-color: color-mix(in srgb, #a0522d 45%, var(--line));
+}
+.continue-card.is-khilafa .cc-bar > span {
+  background: #a0522d;
+}
+.video-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+  scroll-margin-top: 72px;
+}
+.video-frame > div,
+.video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.video-wait {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #ddd;
+  font-size: 0.9rem;
+}
+.khilafa button.surah-link {
+  background: none;
+  border: 0;
+  width: 100%;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}

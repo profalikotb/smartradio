@@ -5,6 +5,9 @@ import { AddStationForm } from "@/components/AddStation";
 import { useState } from "react";
 import { TafsirContinue } from "@/components/TafsirContinue";
 import { ArtistContinue } from "@/components/artist/ArtistContinue";
+import { KhilafaContinue } from "@/components/KhilafaContinue";
+import { useK } from "@/lib/khilafa";
+import { useRouter } from "next/navigation";
 import { CLIENTS } from "@/lib/umm/client";
 import { continueLast, getManifest, useManifest } from "@/lib/tafsir/client";
 import { useProgress } from "@/lib/tafsir/progress";
@@ -35,6 +38,8 @@ export default function Home() {
   const ummLast = CLIENTS.umm.store.use((p) => p.last);
   const halimLast = CLIENTS.halim.store.use((p) => p.last);
   const fairuzLast = CLIENTS.fairuz.store.use((p) => p.last);
+  const khilafaLast = useK().last;
+  const router = useRouter();
   CLIENTS.umm.useLibrary(); // warm the singer libraries so "continue" works in one tap
   CLIENTS.halim.useLibrary();
   CLIENTS.fairuz.useLibrary();
@@ -45,6 +50,7 @@ export default function Home() {
       ["umm", ummLast?.at ?? 0],
       ["halim", halimLast?.at ?? 0],
       ["fairuz", fairuzLast?.at ?? 0],
+      ["khilafa", khilafaLast?.at ?? 0],
     ] as const
   )
     .filter(([, at]) => at > 0)
@@ -87,6 +93,10 @@ export default function Home() {
           <span className="dash-ico" aria-hidden>🌙</span>
           <span>{lang === "ar" ? "فيروز" : "Fairuz"}</span>
         </Link>
+        <Link href="/khilafa" className="dash-btn is-khilafa">
+          <span className="dash-ico" aria-hidden>📜</span>
+          <span>{lang === "ar" ? "الخلافة الإسلامية" : "Islamic Caliphate"}</span>
+        </Link>
         <Link href="/favorites" className="dash-btn">
           <span className="dash-ico" aria-hidden>❤️</span>
           <span>{lang === "ar" ? "المفضلة" : "Favorites"}</span>
@@ -97,6 +107,10 @@ export default function Home() {
           onClick={() => {
             // Most recent of Tafsir / Umm Kulthum / Abdel Halim, then the last radio station.
             for (const k of latest) {
+              if (k === "khilafa") {
+                router.push("/khilafa?resume=1");
+                return;
+              }
               if (k === "tafsir") {
                 const m = getManifest();
                 if (m && continueLast(m)) return;
@@ -110,7 +124,7 @@ export default function Home() {
         </button>
       </nav>
 
-      {latest[0] && latest[0] !== "tafsir" ? <ArtistContinue slug={latest[0]} compact /> : <TafsirContinue compact />}
+      {latest[0] === "khilafa" ? <KhilafaContinue compact /> : latest[0] && latest[0] !== "tafsir" ? <ArtistContinue slug={latest[0]} compact /> : <TafsirContinue compact />}
 
       {showResume && lastView && (
         <button className="resume-card" onClick={() => player().playById(lastView.id)}>
